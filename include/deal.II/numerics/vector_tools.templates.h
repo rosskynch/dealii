@@ -3555,16 +3555,25 @@ namespace VectorTools
     hp::QCollection<dim> face_quadrature_collection;
 
     for (unsigned int face = 0; face < GeometryInfo<dim>::faces_per_cell; ++face)
+    {
       face_quadrature_collection.push_back
       (QProjector<dim>::project_to_face (reference_face_quadrature, face));
+    }
 
-    hp::FEValues<dim> fe_face_values (mapping_collection, fe_collection,
-                                      face_quadrature_collection,
-                                      update_jacobians |
-                                      update_JxW_values |
+    FEFaceValues<dim> fe_face_values (dof_handler.get_fe(),
+                                      reference_face_quadrature,
+                                      update_values |
                                       update_quadrature_points |
                                       update_normal_vectors |
-                                      update_values);
+                                      update_JxW_values);
+                                      
+//     hp::FEValues<dim> fe_face_values (mapping_collection, fe_collection,
+//                                       face_quadrature_collection,
+// //                                       update_jacobians |
+//                                       update_JxW_values |
+//                                       update_quadrature_points |
+//                                       update_normal_vectors |
+//                                       update_values);
 
     std::vector<bool> dofs_processed (dofs_per_face);
     std::vector<double> dof_values (dofs_per_face);
