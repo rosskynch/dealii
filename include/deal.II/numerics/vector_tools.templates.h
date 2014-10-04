@@ -2893,11 +2893,7 @@ namespace VectorTools
       const double tol = 0.5 * cell->face (face)->line (line)->diameter () / cell->get_fe ().degree;
       const unsigned int dim = 3;
       const unsigned int spacedim = 3;
-      // Store degree as fe.degree-1
-      // For nedelec elements FE_Nedelec<dim> (0) returns fe.degree = 1.
-      // We'll use degree to avoid confusion.
-      unsigned int degree = get_fe().degree - 1;
-
+      
       // reinit for this cell, face and line.
       hp_fe_values.reinit
       (cell,
@@ -2909,6 +2905,10 @@ namespace VectorTools
       const FEValues<dim> &
       fe_values = hp_fe_values.get_present_fe_values ();
       const FiniteElement<dim> &fe = cell->get_fe ();
+      // Store degree as fe.degree-1
+      // For nedelec elements FE_Nedelec<dim> (0) returns fe.degree = 1.
+      // We'll use degree to avoid confusion.
+      unsigned int degree = fe.degree;
       const std::vector<Point<dim> > &
       quadrature_points = fe_values.get_quadrature_points ();
 
@@ -2975,7 +2975,7 @@ namespace VectorTools
        * For a set of FESystem elements we need to pick out the matching base element and
        * the index within this ordering.
        */
-      std::vector<unsigned int> associated_edge_dof_to_face_dof(degree+1);
+      std::vector<unsigned int> associated_edge_dof_to_face_dof (degree+1);
       
       // Lowest DoF in the base element allowed for this edge:
       unsigned int lower_bound =
@@ -3004,7 +3004,7 @@ namespace VectorTools
           && (line * (degree+1) <= face_idx)
           && (face_idx <= (line + 1) * (degree+1)-1)))
         {
-          associated_edge_dof_to_face_dof[index] = face_idx;
+          associated_edge_dof_to_face_dof[edge_dof_index] = face_idx;
           ++edge_dof_index;
         }
       }
@@ -3211,7 +3211,7 @@ namespace VectorTools
                  && (fe.system_to_base_index (fe.face_to_cell_index (i, face)).first == base_indices))
                 || (dynamic_cast<const FE_Nedelec<dim>*> (&fe) != 0))
             {
-              associated_edge_dof_to_face_dof[index] = i;
+              associated_edge_dof_to_face_dof[edge_index] = i;
               ++edge_index;
             }
           }
