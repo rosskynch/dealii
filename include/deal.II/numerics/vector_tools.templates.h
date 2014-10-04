@@ -2908,7 +2908,7 @@ namespace VectorTools
       // Store degree as fe.degree-1
       // For nedelec elements FE_Nedelec<dim> (0) returns fe.degree = 1.
       // We'll use degree to avoid confusion.
-      unsigned int degree = fe.degree;
+      unsigned int degree = fe.degree-1;
       const std::vector<Point<dim> > &
       quadrature_points = fe_values.get_quadrature_points ();
 
@@ -3219,7 +3219,7 @@ namespace VectorTools
           unsigned int associated_edge_dofs=edge_index;
           if (associated_edge_dofs != degree+1)
           {
-            std::cout << "DoFs found(" << associated_edge_dofs
+            std::cout << "Edge DoFs found(" << associated_edge_dofs
             << ") != degree+1(" << degree+1
             << ")" << std::endl;
           }
