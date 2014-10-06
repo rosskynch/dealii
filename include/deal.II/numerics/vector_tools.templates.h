@@ -2908,7 +2908,7 @@ namespace VectorTools
       // Store degree as fe.degree-1
       // For nedelec elements FE_Nedelec<dim> (0) returns fe.degree = 1.
       // We'll use degree to avoid confusion.
-      unsigned int degree = fe.degree-1;
+      unsigned int degree = fe.degree - 1;
       const std::vector<Point<dim> > &
       quadrature_points = fe_values.get_quadrature_points ();
 
@@ -2985,12 +2985,12 @@ namespace VectorTools
       fe.base_element(base_indices.first).face_to_cell_index((line + 1) * (degree+1) - 1, face);
       
       unsigned int edge_dof_index = 0;
-      for (unsigned int line_idx=0;line_idx<fe.dofs_per_line;++line_idx)
+      for (unsigned int face_idx=0;face_idx<fe.dofs_per_face;++face_idx)
       {
         // Assuming DoFs on a face are numbered in order by lines then faces.
         // i.e. line 0 has degree+1 dofs numbered 0,..,degree
         //      line 1 has degree+1 dofs numbered (degree+1),..,2*(degree+1) and so on.
-        unsigned int face_idx = line*fe.dofs_per_line + line_idx;
+//         unsigned int face_idx = line*fe.dofs_per_line + line_idx;
         // Note, assuming that the edge orientations are "standard"
         //       i.e. cell->line_orientation(line) = true.
         unsigned int cell_idx = fe.face_to_cell_index(face_idx,face);
@@ -3066,7 +3066,7 @@ namespace VectorTools
         {
           unsigned int j_face_idx = associated_edge_dof_to_face_dof[j];
           unsigned int j_cell_idx = fe.face_to_cell_index (j_face_idx, face);
-          for (unsigned int i = j; i < associated_edge_dofs; ++i)
+          for (unsigned int i = 0; i < associated_edge_dofs; ++i)
           {
             unsigned int i_face_idx = associated_edge_dof_to_face_dof[i];
             unsigned int i_cell_idx = fe.face_to_cell_index (i_face_idx, face);
@@ -3077,7 +3077,7 @@ namespace VectorTools
             * (fe_values[vec].value (j_cell_idx, q_point) * tangential);
           }
           // Compute the RHS entries:
-          edge_rhs(j) -= fe_values.JxW (q_point)
+          edge_rhs(j) += fe_values.JxW (q_point)
           * (values[q_point] (first_vector_component) * tangential (0)
              + values[q_point] (first_vector_component + 1) * tangential (1)
              + values[q_point] (first_vector_component + 2) * tangential (2))
@@ -3085,13 +3085,13 @@ namespace VectorTools
         }
       }
       // Fill lower triangle of matrix
-      for (unsigned int i=1;i<associated_edge_dofs;++i)
-      {
-        for (unsigned int j=0;j<i;++j)
-        {
-          edge_matrix(i,j) = edge_matrix(j,i);
-        }
-      }
+//       for (unsigned int i=1;i<associated_edge_dofs;++i)
+//       {
+//         for (unsigned int j=0;j<i;++j)
+//         {
+//           edge_matrix(i,j) = edge_matrix(j,i);
+//         }
+//       }
 
       // Invert linear system
       edge_matrix_inv.invert(edge_matrix);
@@ -3130,7 +3130,8 @@ namespace VectorTools
     void
     compute_face_projection_curl_conforming (const cell_iterator &cell,
                                              const unsigned int face,
-                                             hp::FEValues<dim> &hp_fe_values,
+                                             FEFaceValues<dim> &fe_face_values,
+//                                              hp::FEValues<dim> &hp_fe_values,
                                              const Function<dim> &boundary_function,
                                              const unsigned int first_vector_component,
                                              std::vector<double> &dof_values,
@@ -3141,17 +3142,14 @@ namespace VectorTools
        * with first component first_vector_component (length dim).
        */
       const unsigned int spacedim = dim;
-      hp_fe_values.reinit (cell, cell->active_fe_index ()
-                           * GeometryInfo<dim>::faces_per_cell + face);
+      fe_face_values.reinit(cell,face);
+//       hp_fe_values.reinit (cell, cell->active_fe_index ()
+//                            * GeometryInfo<dim>::faces_per_cell + face);
       // Initialize the required
       // objects.
-      const FEValues<dim> &
-      fe_values = hp_fe_values.get_present_fe_values ();
       const FiniteElement<dim> &fe = cell->get_fe ();
-      const std::vector< DerivativeForm<1,dim,spacedim> > &
-      jacobians = fe_values.get_jacobians ();
       const std::vector<Point<dim> > &
-      quadrature_points = fe_values.get_quadrature_points ();
+      quadrature_points = fe_face_values.get_quadrature_points ();
       const unsigned int degree = fe.degree - 1;
       std::pair<unsigned int, unsigned int> base_indices (0, 0);
 
@@ -3184,7 +3182,7 @@ namespace VectorTools
       }
 
       std::vector<Vector<double> >
-      values (fe_values.n_quadrature_points, Vector<double> (fe.n_components ()));
+      values (fe_face_values.n_quadrature_points, Vector<double> (fe.n_components ()));
 
       // Get boundary function
       // values at quadrature
@@ -3235,7 +3233,7 @@ namespace VectorTools
           Point<dim> tangential;
 
           const std::vector<Point<dim> > &
-          reference_quadrature_points = fe_values.get_quadrature ().get_points ();
+          reference_quadrature_points = fe_face_values.get_quadrature_points();
 
           // coordinate directions
           // of the face.
@@ -3252,7 +3250,7 @@ namespace VectorTools
           // of the boundary function
           // on the edge.
           for (unsigned int q_point = 0;
-               q_point < fe_values.n_quadrature_points; ++q_point)
+               q_point < fe_face_values.n_quadrature_points; ++q_point)
           {
             // Compute the
             // tangential of the
@@ -3268,11 +3266,11 @@ namespace VectorTools
             shifted_reference_point_2 (face_coordinate_direction[face])
               -= tol;
             tangential
-              = (fe_values.get_mapping ()
+            = (fe_face_values.get_mapping ()
                  .transform_unit_to_real_cell (cell,
                                                shifted_reference_point_1)
                  -
-                 fe_values.get_mapping ()
+                 fe_face_values.get_mapping ()
                  .transform_unit_to_real_cell (cell,
                                                shifted_reference_point_2))
                 / tol;
@@ -3288,15 +3286,15 @@ namespace VectorTools
               {
                 unsigned int i_face_idx=associated_edge_dof_to_face_dof[i];
                 edge_matrix(i,j)
-                  += fe_values.JxW (q_point)
-                      * (fe_values[vec].value (fe.face_to_cell_index (i_face_idx, face), q_point) * tangential)
-                      * (fe_values[vec].value (fe.face_to_cell_index (j_face_idx, face), q_point) * tangential);
+                += fe_face_values.JxW (q_point)
+                * (fe_face_values[vec].value (fe.face_to_cell_index (i_face_idx, face), q_point) * tangential)
+                * (fe_face_values[vec].value (fe.face_to_cell_index (j_face_idx, face), q_point) * tangential);
               }
               edge_rhs(j)
-                -= fe_values.JxW (q_point)
+              -= fe_face_values.JxW (q_point)
                     * (values[q_point] (first_vector_component) * tangential (0)
                        + values[q_point] (first_vector_component + 1) * tangential (1))
-                    * (fe_values[vec].value (fe.face_to_cell_index (j_face_idx, face), q_point) * tangential);
+                    * (fe_face_values[vec].value (fe.face_to_cell_index (j_face_idx, face), q_point) * tangential);
             }
           }
           // Fill lower triangle of matrix
@@ -3446,7 +3444,7 @@ namespace VectorTools
           cross_product_j,
           cross_product_rhs;
           for (unsigned int q_point = 0;
-               q_point < fe_values.n_quadrature_points; ++q_point)
+               q_point < fe_face_values.n_quadrature_points; ++q_point)
           {
             /* First calculate the residual from the edge functions
              * store the result of in tmp.
@@ -3461,14 +3459,14 @@ namespace VectorTools
               {
                 unsigned int face_idx = associated_edge_dof_to_face_dof[line][edge_dof];
                 unsigned int cell_idx = fe.face_to_cell_index(face_idx,face);
-                tmp -= dof_values[face_idx]*fe_values[vec].value(cell_idx,q_point);
+                tmp -= dof_values[face_idx]*fe_face_values[vec].value(cell_idx,q_point);
               }
             }
             
             //store the normal vector on the face at q_point;
             for (unsigned int d=0;d<dim;++d)
             {
-              normal_vector[d] = fe_values.normal_vector(q_point)(d);
+              normal_vector[d] = fe_face_values.normal_vector(q_point)(d);
             }
             // Now compute the linear system
             for (unsigned int j=0;j<num_component_face_dofs;++j)
@@ -3478,7 +3476,7 @@ namespace VectorTools
               
               cross_product(cross_product_j,
                             normal_vector,
-                            fe_values[vec].value(cell_j, q_point));
+                            fe_face_values[vec].value(cell_j, q_point));
               
               for (unsigned int i=j;i<num_component_face_dofs;++i)
               {
@@ -3486,10 +3484,10 @@ namespace VectorTools
                 unsigned int cell_i = fe.face_to_cell_index (i_face_idx, face);
                 cross_product(cross_product_i,
                               normal_vector,
-                              fe_values[vec].value(cell_i, q_point));
+                              fe_face_values[vec].value(cell_i, q_point));
                 
                 face_matrix(i,j)
-                  += fe_values.JxW (q_point)
+                += fe_face_values.JxW (q_point)
                     *cross_product_i
                     *cross_product_j;
               }
@@ -3498,7 +3496,7 @@ namespace VectorTools
                             normal_vector,
                             tmp);
               face_rhs(j)
-              += fe_values.JxW (q_point)
+              += fe_face_values.JxW (q_point)
               *cross_product_rhs
               *cross_product_j;
               
@@ -3581,76 +3579,85 @@ namespace VectorTools
     typename DoFHandler<dim>::active_cell_iterator cell = dof_handler.begin_active ();
 
     switch (dim)
-      {
+    {
       case 2:
       {
         for (; cell != dof_handler.end (); ++cell)
+        {
           if (cell->at_boundary () && cell->is_locally_owned ())
+          {
             for (unsigned int face = 0; face < GeometryInfo<dim>::faces_per_cell; ++face)
+            {
               if (cell->face (face)->boundary_indicator () == boundary_component)
+              {
+                // if the FE is a
+                // FE_Nothing object
+                // there is no work to
+                // do
+                if (dynamic_cast<const FE_Nothing<dim>*> (&cell->get_fe ()) != 0)
                 {
-                  // if the FE is a
-                  // FE_Nothing object
-                  // there is no work to
-                  // do
-                  if (dynamic_cast<const FE_Nothing<dim>*> (&cell->get_fe ()) != 0)
-                    return;
-
-                  // This is only
-                  // implemented, if the
-                  // FE is a Nedelec
-                  // element. If the FE
-                  // is a FESystem, we
-                  // cannot check this.
-                  if (dynamic_cast<const FESystem<dim>*> (&cell->get_fe ()) == 0)
-                    {
-                      typedef FiniteElement<dim> FEL;
-                      AssertThrow (dynamic_cast<const FE_Nedelec<dim>*> (&cell->get_fe ()) != 0,
-
-                                   typename FEL::ExcInterpolationNotImplemented ());
-                    }
-
-                  for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
-                    {
-                      dof_values[dof] = 0.0;
-                      dofs_processed[dof] = false;
-                    }
-
-                  // Compute the
-                  // projection of the
-                  // boundary function on
-                  // the edge.
-                  internals
-                  ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
-                                                             boundary_function,
-                                                             first_vector_component,
-                                                             dof_values, dofs_processed);
-                  cell->face (face)->get_dof_indices (face_dof_indices,
-                                                      cell->active_fe_index ());
-
-                  // Add the computed
-                  // constraints to the
-                  // constraint matrix,
-                  // if the degree of
-                  // freedom is not
-                  // already constrained.
-                  for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
-                    if (dofs_processed[dof] && constraints.can_store_line (face_dof_indices[dof])
-                        && !(constraints.is_constrained (face_dof_indices[dof])))
-                      {
-                        constraints.add_line (face_dof_indices[dof]);
-
-                        if (std::abs (dof_values[dof]) > 1e-13)
-                          constraints.set_inhomogeneity (face_dof_indices[dof], dof_values[dof]);
-                      }
+                  return;
                 }
 
+                // This is only
+                // implemented, if the
+                // FE is a Nedelec
+                // element. If the FE
+                // is a FESystem, we
+                // cannot check this.
+                if (dynamic_cast<const FESystem<dim>*> (&cell->get_fe ()) == 0)
+                {
+                  typedef FiniteElement<dim> FEL;
+                  AssertThrow (dynamic_cast<const FE_Nedelec<dim>*> (&cell->get_fe ()) != 0,
+                               typename FEL::ExcInterpolationNotImplemented ());
+                  
+                }
+                for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
+                {
+                  dof_values[dof] = 0.0;
+                  dofs_processed[dof] = false;
+                }
+
+                // Compute the
+                // projection of the
+                // boundary function on
+                // the edge.
+                internals
+                ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
+                                                           boundary_function,
+                                                           first_vector_component,
+                                                           dof_values, dofs_processed);
+                cell->face (face)->get_dof_indices (face_dof_indices,
+                                                    cell->active_fe_index ());
+
+                // Add the computed
+                // constraints to the
+                // constraint matrix,
+                // if the degree of
+                // freedom is not
+                // already constrained.
+                for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
+                {
+                  if (dofs_processed[dof] && constraints.can_store_line (face_dof_indices[dof])
+                    && !(constraints.is_constrained (face_dof_indices[dof])))
+                  {
+                    constraints.add_line (face_dof_indices[dof]);
+                    if (std::abs (dof_values[dof]) > 1e-13)
+                    {
+                      constraints.set_inhomogeneity (face_dof_indices[dof], dof_values[dof]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         break;
       }
 
       case 3:
       {
-        const QGauss<dim-2> reference_edge_quadrature (2 * superdegree);
+        const QGauss<dim-2> reference_edge_quadrature (2 * superdegree+1);
         const unsigned int degree = superdegree - 1;
         hp::QCollection<dim> edge_quadrature_collection;
 
@@ -3683,60 +3690,66 @@ namespace VectorTools
                                           update_values);
 
         for (; cell != dof_handler.end (); ++cell)
+        {
           if (cell->at_boundary () && cell->is_locally_owned ())
+          {
             for (unsigned int face = 0; face < GeometryInfo<dim>::faces_per_cell; ++face)
+            {
               if (cell->face (face)->boundary_indicator () == boundary_component)
+              {
+                // if the FE is a
+                // FE_Nothing object
+                // there is no work to
+                // do
+                if (dynamic_cast<const FE_Nothing<dim>*> (&cell->get_fe ()) != 0)
                 {
-                  // if the FE is a
-                  // FE_Nothing object
-                  // there is no work to
-                  // do
-                  if (dynamic_cast<const FE_Nothing<dim>*> (&cell->get_fe ()) != 0)
-                    return;
-
-                  // This is only
-                  // implemented, if the
-                  // FE is a Nedelec
-                  // element. If the FE is
-                  // a FESystem we cannot
-                  // check this.
-                  if (dynamic_cast<const FESystem<dim>*> (&cell->get_fe ()) == 0)
-                    {
-                      typedef FiniteElement<dim> FEL;
-
-                      AssertThrow (dynamic_cast<const FE_Nedelec<dim>*> (&cell->get_fe ()) != 0,
-                                   typename FEL::ExcInterpolationNotImplemented ());
-                    }
-
-                  for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
-                    {
-                      dof_values[dof] = 0.0;
-                      dofs_processed[dof] = false;
-                    }
-
-                  // First we compute the
-                  // projection on the
-                  // edges.
-                  for (unsigned int line = 0;
-                       line < GeometryInfo<3>::lines_per_face; ++line)
-                    internals
-                    ::compute_edge_projection (cell, face, line, fe_edge_values,
-                                               boundary_function,
-                                               first_vector_component,
-                                               dof_values, dofs_processed);
-
+                  return;
+                }
+                
+                // This is only
+                // implemented, if the
+                // FE is a Nedelec
+                // element. If the FE is
+                // a FESystem we cannot
+                // check this.
+                if (dynamic_cast<const FESystem<dim>*> (&cell->get_fe ()) == 0)
+                {
+                  typedef FiniteElement<dim> FEL;
+                  
+                  AssertThrow (dynamic_cast<const FE_Nedelec<dim>*> (&cell->get_fe ()) != 0,
+                               typename FEL::ExcInterpolationNotImplemented ());
+                  
+                }
+                for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
+                {
+                  dof_values[dof] = 0.0;
+                  dofs_processed[dof] = false;
+                }
+                // First we compute the
+                // projection on the
+                // edges.
+                for (unsigned int line = 0; line < GeometryInfo<3>::lines_per_face; ++line)
+                {
+                  internals
+                  ::compute_edge_projection (cell, face, line, fe_edge_values,
+                                             boundary_function,
+                                             first_vector_component,
+                                             dof_values, dofs_processed);
+                  
                   // If there are higher
                   // order shape
                   // functions, there is
                   // still some work
                   // left.
                   if (degree > 0)
+                  {
                     internals
                     ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
                                                                boundary_function,
                                                                first_vector_component,
                                                                dof_values,
                                                                dofs_processed);
+                  }
 
                   // Store the computed
                   // values in the global
@@ -3745,25 +3758,29 @@ namespace VectorTools
                                                       cell->active_fe_index ());
 
                   for (unsigned int dof = 0; dof < dofs_per_face; ++dof)
+                  {
                     if (dofs_processed[dof] && constraints.can_store_line (face_dof_indices[dof])
                         && !(constraints.is_constrained (face_dof_indices[dof])))
+                    {
+                      constraints.add_line (face_dof_indices[dof]);
+                      
+                      if (std::abs (dof_values[dof]) > 1e-13)
                       {
-                        constraints.add_line (face_dof_indices[dof]);
-
-                        if (std::abs (dof_values[dof]) > 1e-13)
                           constraints.set_inhomogeneity (face_dof_indices[dof], dof_values[dof]);
                       }
+                    }
+                  }
                 }
-
+              }
+            }
+          }
+        }
         break;
       }
-
       default:
-        Assert (false, ExcNotImplemented ());
-      }
+        Assert (false, ExcNotImplemented ());  
+    }
   }
-
-
 
   template <int dim>
   void
@@ -3833,11 +3850,11 @@ namespace VectorTools
                       dofs_processed[dof] = false;
                     }
 
-                  internals
-                  ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
-                                                             boundary_function,
-                                                             first_vector_component,
-                                                             dof_values, dofs_processed);
+//                   internals
+//                   ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
+//                                                              boundary_function,
+//                                                              first_vector_component,
+//                                                              dof_values, dofs_processed);
                   face_dof_indices.resize (dofs_per_face);
                   cell->face (face)->get_dof_indices (face_dof_indices,
                                                       cell->active_fe_index ());
@@ -3922,12 +3939,12 @@ namespace VectorTools
 
                   // If there are higher order shape functions, there is still
                   // some work left.
-                  if (degree > 0)
-                    internals
-                    ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
-                                                               boundary_function,
-                                                               first_vector_component,
-                                                               dof_values, dofs_processed);
+//                   if (degree > 0)
+//                     internals
+//                     ::compute_face_projection_curl_conforming (cell, face, fe_face_values,
+//                                                                boundary_function,
+//                                                                first_vector_component,
+//                                                                dof_values, dofs_processed);
 
 
                   face_dof_indices.resize (dofs_per_face);
