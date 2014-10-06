@@ -2976,7 +2976,8 @@ namespace VectorTools
        * the index within this ordering.
        */
       std::vector<unsigned int> associated_edge_dof_to_face_dof (degree+1);
-      
+      std::cout << "lower bound: " << line*(degree+1) << " " << face << std::endl;
+      std::cout << "upper bound: " << (line+1)*(degree+1) -1 << " " << face << std::endl;
       // Lowest DoF in the base element allowed for this edge:
       unsigned int lower_bound =
       fe.base_element(base_indices.first).face_to_cell_index(line * (degree+1), face);
@@ -2994,7 +2995,6 @@ namespace VectorTools
         // Note, assuming that the edge orientations are "standard"
         //       i.e. cell->line_orientation(line) = true.
         unsigned int cell_idx = fe.face_to_cell_index(face_idx,face);
-        std::cout << " face " << face_idx << " local dof " << cell_idx << std::endl;
         
         // Check this cell_idx belongs to the correct base_element, component and line:
         if (((dynamic_cast<const FESystem<dim>*> (&fe) != 0)
@@ -3143,7 +3143,7 @@ namespace VectorTools
        * with first component first_vector_component (length dim).
        */
       const unsigned int spacedim = dim;
-      fe_face_values.reinit(cell,face);
+      fe_face_values.reinit (cell, face);
 //       hp_fe_values.reinit (cell, cell->active_fe_index ()
 //                            * GeometryInfo<dim>::faces_per_cell + face);
       // Initialize the required
@@ -3201,9 +3201,9 @@ namespace VectorTools
            *    - for FESystem<2> this just requires matching the base element, fe.system_to_base_index.first.first
            *      and the copy of the base element we're interested in, fe.system_to_base_index.first.second
            */
-          std::vector<unsigned int> associated_edge_dof_to_face_dof(degree+1);
+          std::vector<unsigned int> associated_edge_dof_to_face_dof (degree + 1);
           
-          unsigned int associated_edge_dof_index=0;
+          unsigned int associated_edge_dof_index = 0;
           for (unsigned int face_idx = 0; face_idx < fe.dofs_per_face; ++face_idx)
           {
             unsigned int cell_idx = fe.face_to_cell_index (face_idx, face);
@@ -3216,26 +3216,26 @@ namespace VectorTools
             }
           }
           // Sanity check:
-          unsigned int associated_edge_dofs=associated_edge_dof_index;
-          if (associated_edge_dofs != degree+1)
+          unsigned int associated_edge_dofs = associated_edge_dof_index;
+          if (associated_edge_dofs != degree + 1)
           {
             std::cout << "Edge DoFs found(" << associated_edge_dofs
-            << ") != degree+1(" << degree+1
+            << ") != degree+1(" << degree + 1
             << ")" << std::endl;
           }
           
           // Matrix and RHS vectors to store:
           // We have (degree+1) edge basis functions
-          FullMatrix<double> edge_matrix(degree+1,degree+1);
-          FullMatrix<double> edge_matrix_inv(degree+1,degree+1);
-          Vector<double> edge_rhs(degree+1);
-          Vector<double> edge_solution(degree+1);
+          FullMatrix<double> edge_matrix (degree + 1,degree + 1);
+          FullMatrix<double> edge_matrix_inv (degree + 1,degree + 1);
+          Vector<double> edge_rhs (degree + 1);
+          Vector<double> edge_solution (degree + 1);
           
           const double tol = 0.5 * cell->face (face)->diameter () / cell->get_fe ().degree;
           Point<dim> tangential;
 
           const std::vector<Point<dim> > &
-          reference_quadrature_points = fe_face_values.get_quadrature_points();
+          reference_quadrature_points = fe_face_values.get_quadrature_points ();
 
           // coordinate directions
           // of the face.
@@ -3283,10 +3283,10 @@ namespace VectorTools
             // Note the system is symmetric so we only compute the upper triangle.
             for (unsigned int j = 0; j < associated_edge_dofs; ++j)
             {
-              unsigned int j_face_idx=associated_edge_dof_to_face_dof[j];
+              unsigned int j_face_idx = associated_edge_dof_to_face_dof[j];
               for (unsigned int i = 0; i < associated_edge_dofs; ++i)
               {
-                unsigned int i_face_idx=associated_edge_dof_to_face_dof[i];
+                unsigned int i_face_idx = associated_edge_dof_to_face_dof[i];
                 edge_matrix(i,j)
                 += fe_face_values.JxW (q_point)
                 * (fe_face_values[vec].value (fe.face_to_cell_index (i_face_idx, face), q_point) * tangential)
@@ -3311,10 +3311,10 @@ namespace VectorTools
           edge_matrix_inv.invert(edge_matrix);
           edge_matrix_inv.vmult(edge_solution,edge_rhs);
           // Store computed DoFs
-          for (unsigned int comp_face_idx=0;comp_face_idx<associated_edge_dofs;++comp_face_idx)
+          for (unsigned int associated_edge_dof_index = 0; associated_edge_dof_index < associated_edge_dofs; ++associated_edge_dof_index)
           {
-            dof_values[associated_edge_dof_to_face_dof[comp_face_idx]]=edge_solution(comp_face_idx);
-            dofs_processed[associated_edge_dof_to_face_dof[comp_face_idx]] = true;
+            dof_values[associated_edge_dof_to_face_dof[associated_edge_dof_index]] = edge_solution (associated_edge_dof_index);
+            dofs_processed[associated_edge_dof_to_face_dof[associated_edge_dof_index]] = true;
           }
           break;
         }
@@ -3327,10 +3327,10 @@ namespace VectorTools
            * There are 2*degree*(degree+1) DoFs associated with a face in 3D.
            * Note this doesn't include the DoFs associated with edges on that face.
            */
-          FullMatrix<double> face_matrix(2*degree*(degree+1));
-          FullMatrix<double> face_matrix_inv(2*degree*(degree+1));
-          Vector<double> face_rhs(2*degree*(degree+1));
-          Vector<double> face_solution(2*degree*(degree+1));
+          FullMatrix<double> face_matrix (2*degree*(degree + 1));
+          FullMatrix<double> face_matrix_inv (2*degree*(degree + 1));
+          Vector<double> face_rhs (2*degree*(degree + 1));
+          Vector<double> face_solution (2*degree*(degree + 1));
           
           /* First group DoFs associated with edges which we already know.
            * Sort these into groups of dofs (0 degree+1 of them) by each edge.
@@ -3338,23 +3338,23 @@ namespace VectorTools
            * 
            * This matches with the search done in compute_edge_projection.
            */
-          unsigned int lines_per_face=GeometryInfo<dim>::lines_per_face;
-          std::vector<std::vector<unsigned int>> associated_edge_dof_to_face_dof(lines_per_face, std::vector<unsigned int> (degree+1));
-          std::vector<unsigned int> associated_edge_dofs(lines_per_face);
+          unsigned int lines_per_face = GeometryInfo<dim>::lines_per_face;
+          std::vector<std::vector<unsigned int>> associated_edge_dof_to_face_dof(lines_per_face, std::vector<unsigned int> (degree + 1));
+          std::vector<unsigned int> associated_edge_dofs (lines_per_face);
           
-          for (unsigned int line=0; line<lines_per_face;++line)
+          for (unsigned int line = 0; line < lines_per_face; ++line)
           {
             // Lowest DoF in the base element allowed for this edge:
             unsigned int lower_bound =
-            fe.base_element(base_indices.first).face_to_cell_index(line * (degree+1), face);
+            fe.base_element(base_indices.first).face_to_cell_index(line * (degree + 1), face);
             // Highest DoF in the base element allowed for this edge:
             unsigned int upper_bound =
-            fe.base_element(base_indices.first).face_to_cell_index((line + 1) * (degree) - 1, face);
-            unsigned int associated_edge_dof_index=0;
-            for (unsigned int face_idx=0;face_idx<fe.dofs_per_face;++face_idx)
+            fe.base_element(base_indices.first).face_to_cell_index((line + 1) * (degree + 1) - 1, face);
+            unsigned int associated_edge_dof_index = 0;
+            for (unsigned int face_idx = 0; face_idx < fe.dofs_per_face; ++face_idx)
             {
 //              unsigned int face_idx = line*fe.dofs_per_line + line_idx;
-              unsigned int cell_idx = fe.face_to_cell_index(face_idx,face);
+              unsigned int cell_idx = fe.face_to_cell_index(face_idx, face);
               // Check this cell_idx belongs to the correct base_element, component and line:
               if (((dynamic_cast<const FESystem<dim>*> (&fe) != 0)
                    && (fe.system_to_base_index (cell_idx).first == base_indices)
@@ -3369,12 +3369,12 @@ namespace VectorTools
               }
             }
             // Sanity check:
-            associated_edge_dofs[line]=associated_edge_dof_index;
-            if (associated_edge_dofs[line] != degree+1)
+            associated_edge_dofs[line] = associated_edge_dof_index;
+            if (associated_edge_dofs[line] != degree + 1)
             {
               std::cout << "DoFs found(" << associated_edge_dofs[line]
               << ") on line " << line
-              << " != degree+1(" << (degree+1)
+              << " != degree+1(" << (degree + 1)
               << ")" << std::endl;
             }
           }
@@ -3393,13 +3393,13 @@ namespace VectorTools
            * copy within that base element) and ensure we're above the number of 
            * edge DoFs within that base element.
            */
-          std::vector<unsigned int> associated_face_dof_to_face_dof(2*degree*(degree+1));
+          std::vector<unsigned int> associated_face_dof_to_face_dof (2*degree*(degree + 1));
           
           // Where the first face DoF on the base element would be on as local cell numbering:
           unsigned int lower_cell_bound = fe.base_element (base_indices.first)
-                            .face_to_cell_index(lines_per_face * (fe.degree+1), face);
+                            .face_to_cell_index(lines_per_face * (degree + 1), face);
           
-          unsigned int associated_face_dof_index=0;
+          unsigned int associated_face_dof_index = 0;
           for (unsigned int face_idx = 0; face_idx < fe.dofs_per_face; ++face_idx)
           {
             unsigned int cell_idx = fe.face_to_cell_index (face_idx, face);
@@ -3414,11 +3414,11 @@ namespace VectorTools
             }
           }
           // Sanity check:
-          unsigned int num_component_face_dofs=face_index;
-          if (num_component_face_dofs != 2*degree*(degree+1))
+          unsigned int associated_face_dofs = associated_face_dof_index;
+          if (associated_face_dofs != 2*degree*(degree + 1))
           {
-            std::cout << "DoFs found(" << num_component_face_dofs
-            << ") != 2*fe.degree*(fe.degree+1)(" << 2*fe.degree*(fe.degree+1)
+            std::cout << "DoFs found(" << associated_face_dofs
+            << ") != 2*degree*(degree+1)(" << 2*degree*(degree + 1)
             << ")" << std::endl;
           }
 
@@ -3455,23 +3455,23 @@ namespace VectorTools
             {
               tmp[d]=values[q_point] (first_vector_component + d);
             }
-            for (unsigned int line=0;line<lines_per_face;++line)
+            for (unsigned int line = 0; line < lines_per_face; ++line)
             {
-              for (unsigned int edge_dof=0;edge_dof<associated_edge_dofs[line];++edge_dof)
+              for (unsigned int associated_edge_dof = 0; associated_edge_dof < associated_edge_dofs[line]; ++associated_edge_dof)
               {
-                unsigned int face_idx = associated_edge_dof_to_face_dof[line][edge_dof];
-                unsigned int cell_idx = fe.face_to_cell_index(face_idx,face);
-                tmp -= dof_values[face_idx]*fe_face_values[vec].value(cell_idx,q_point);
+                unsigned int face_idx = associated_edge_dof_to_face_dof[line][associated_edge_dof];
+                unsigned int cell_idx = fe.face_to_cell_index(face_idx, face);
+                tmp -= dof_values[face_idx]*fe_face_values[vec].value(cell_idx, q_point);
               }
             }
             
             //store the normal vector on the face at q_point;
-            for (unsigned int d=0;d<dim;++d)
+            for (unsigned int d = 0; d < dim; ++d)
             {
               normal_vector[d] = fe_face_values.normal_vector(q_point)(d);
             }
             // Now compute the linear system
-            for (unsigned int j=0;j<num_component_face_dofs;++j)
+            for (unsigned int j = 0; j < associated_face_dofs; ++j)
             {
               unsigned int j_face_idx = associated_face_dof_to_face_dof[j];
               unsigned int cell_j = fe.face_to_cell_index (j_face_idx, face);
@@ -3480,7 +3480,7 @@ namespace VectorTools
                             normal_vector,
                             fe_face_values[vec].value(cell_j, q_point));
               
-              for (unsigned int i=j;i<num_component_face_dofs;++i)
+              for (unsigned int i = j; i < associated_face_dofs; ++i)
               {
                 unsigned int i_face_idx = associated_face_dof_to_face_dof[i];
                 unsigned int cell_i = fe.face_to_cell_index (i_face_idx, face);
@@ -3511,10 +3511,10 @@ namespace VectorTools
           
           
           // Store computed DoFs:
-          for (unsigned int dof=0;dof<num_component_face_dofs;++dof)
+          for (unsigned int associated_face_dof = 0; associated_face_dof < associated_face_dofs; ++associated_face_dof)
           {
-            dof_values[associated_face_dof_to_face_dof[dof]] = face_solution(dof);
-            dofs_processed[associated_face_dof_to_face_dof[dof]] = true;
+            dof_values[associated_face_dof_to_face_dof[associated_face_dof]] = face_solution(associated_face_dof);
+            dofs_processed[associated_face_dof_to_face_dof[associated_face_dof]] = true;
           }
           break;
         }
