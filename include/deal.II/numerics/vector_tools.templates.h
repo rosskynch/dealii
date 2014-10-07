@@ -2918,10 +2918,10 @@ namespace VectorTools
       
       // Matrix and RHS vectors to store linear system:
       // We have (degree+1) basis functions for an edge
-      FullMatrix<double> edge_matrix(degree+1,degree+1);
-      FullMatrix<double> edge_matrix_inv(degree+1,degree+1);
-      Vector<double> edge_rhs(degree+1);
-      Vector<double> edge_solution(degree+1);
+      FullMatrix<double> edge_matrix (degree + 1,degree + 1);
+      FullMatrix<double> edge_matrix_inv (degree + 1,degree + 1);
+      Vector<double> edge_rhs (degree + 1);
+      Vector<double> edge_solution (degree + 1);
 
       // Get boundary function values
       // at quadrature points.
@@ -2976,8 +2976,7 @@ namespace VectorTools
        * the index within this ordering.
        */
       std::vector<unsigned int> associated_edge_dof_to_face_dof (degree+1);
-      std::cout << "lower bound: " << line*(degree+1) << " " << face << std::endl;
-      std::cout << "upper bound: " << (line+1)*(degree+1) -1 << " " << face << std::endl;
+
       // Lowest DoF in the base element allowed for this edge:
       unsigned int lower_bound =
       fe.base_element(base_indices.first).face_to_cell_index(line * (degree+1), face);
@@ -2986,7 +2985,7 @@ namespace VectorTools
       fe.base_element(base_indices.first).face_to_cell_index((line + 1) * (degree+1) - 1, face);
       
       unsigned int associated_edge_dof_index = 0;
-      for (unsigned int face_idx=0; face_idx < fe.dofs_per_face; ++face_idx)
+      for (unsigned int face_idx = 0; face_idx < fe.dofs_per_face; ++face_idx)
       {
         // Assuming DoFs on a face are numbered in order by lines then faces.
         // i.e. line 0 has degree+1 dofs numbered 0,..,degree
@@ -3003,7 +3002,7 @@ namespace VectorTools
           && (fe.system_to_base_index (cell_idx).second <= upper_bound))
           || ((dynamic_cast<const FE_Nedelec<dim>*> (&fe) != 0)
           && (line * (degree+1) <= face_idx)
-          && (face_idx <= (line + 1) * (degree+1)-1)))
+          && (face_idx <= (line + 1) * (degree + 1) - 1)))
         {
           associated_edge_dof_to_face_dof[associated_edge_dof_index] = face_idx;
           ++associated_edge_dof_index;
@@ -3011,7 +3010,7 @@ namespace VectorTools
       }
       // Sanity check:
       unsigned int associated_edge_dofs = associated_edge_dof_index;
-      if (associated_edge_dofs != degree+1)
+      if (associated_edge_dofs != degree + 1)
       {
         std::cout << "Associated DoFs found(" << associated_edge_dofs
         << ") != degree(" << degree+1
@@ -3099,9 +3098,9 @@ namespace VectorTools
       edge_matrix_inv.vmult(edge_solution,edge_rhs);
       
       // Store computed DoFs
-      for (unsigned int i=0;i<associated_edge_dofs;++i)
+      for (unsigned int i = 0; i < associated_edge_dofs; ++i)
       {
-        dof_values[associated_edge_dof_to_face_dof[i]]=edge_solution(i);
+        dof_values[associated_edge_dof_to_face_dof[i]] = edge_solution(i);
         dofs_processed[associated_edge_dof_to_face_dof[i]] = true;
       }
     }
@@ -3361,8 +3360,8 @@ namespace VectorTools
                    && (lower_bound <= fe.system_to_base_index (cell_idx).second)
                    && (fe.system_to_base_index (cell_idx).second <= upper_bound))
                   || ((dynamic_cast<const FE_Nedelec<dim>*> (&fe) != 0)
-                      && (line * (degree+1) <= face_idx)
-                      && (face_idx <= (line + 1) * (degree+1)-1)))
+                      && (line * (degree + 1) <= face_idx)
+                      && (face_idx <= (line + 1) * (degree + 1) - 1)))
               {
                 associated_edge_dof_to_face_dof[line][associated_edge_dof_index] = face_idx;
                 ++associated_edge_dof_index;
@@ -3407,7 +3406,7 @@ namespace VectorTools
                  && (fe.system_to_base_index (cell_idx).first == base_indices)
                  && (lower_cell_bound <= fe.system_to_base_index(cell_idx).second))
                 || ((dynamic_cast<const FE_Nedelec<dim>*> (&fe) != 0)
-                    && (GeometryInfo<dim>::lines_per_face * (degree+1) <= face_idx)))
+                    && (GeometryInfo<dim>::lines_per_face * (degree + 1) <= face_idx)))
             {
               associated_face_dof_to_face_dof[associated_face_dof_index] = face_idx;
               ++associated_face_dof_index;
