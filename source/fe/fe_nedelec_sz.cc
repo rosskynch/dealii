@@ -27,7 +27,7 @@ FE_NedelecSZ<dim>::FE_NedelecSZ (const unsigned int degree)
 : 
 FiniteElement<dim,dim>
 (FiniteElementData<dim> (get_dpo_vector (degree), dim, degree + 1,
-                         FiniteElementData<dim>::Hcurl, 1),
+                         FiniteElementData<dim>::Hcurl),
  std::vector<bool> (compute_n_pols (degree), true),
  std::vector<ComponentMask>(compute_n_pols (degree),
                             std::vector<bool> (dim, true) ) )
@@ -1923,8 +1923,7 @@ void FE_NedelecSZ<dim>::create_polynomials (const unsigned int degree)
   IntegratedLegendrePolynomials = integratedLegendreSZ::generate_complete_basis (degree + 1);
 }
 
-// Template instantiation
-//template class FE_NedelecSZ<2>;
-//template class FE_NedelecSZ<3>;
+// explicit instantiations
+#include "fe_nedelec_sz.inst"
 
 DEAL_II_NAMESPACE_CLOSE
