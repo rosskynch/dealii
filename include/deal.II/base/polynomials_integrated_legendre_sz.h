@@ -28,7 +28,7 @@
 DEAL_II_NAMESPACE_OPEN
 
 /**
- * \brief Class implementing the integrated legendre polynomails described in the PhD thesis of Sabine Zaglmayer.
+ * Class implementing the integrated legendre polynomails described in the PhD thesis of Sabine Zaglmayer.
  *  
  * This class was written based upon the existing deal.II legendre class as a base, but with the coefficents adjusted
  * so that the recursive formula is for the integrated legendre polynomials described in the PhD thesis of
@@ -47,20 +47,42 @@ DEAL_II_NAMESPACE_OPEN
 class IntegratedLegendreSZ : public Polynomials::Polynomial<double>
 {
 public:
+  /**
+   * Constructor generating the coefficient of the polynomials up to degree p.
+   */
   IntegratedLegendreSZ (const unsigned int p);
-  
-  static
-  std::vector<Polynomials::Polynomial<double>> generate_complete_basis (const unsigned int degree); 
-  
+
+
+  /**
+   * Returns the complete set of Integrated Legendre polynomials up to the given degree.
+   */
+  static std::vector<Polynomials::Polynomial<double>> generate_complete_basis (const unsigned int degree); 
+
 private:
   Threads::Mutex coefficients_lock;
   
+  
+  /**
+   * Vector with already computed coefficients. For each degree of the
+   * polynomial, we keep one pointer to the list of coefficients; we do so
+   * rather than keeping a vector of vectors in order to simplify
+   * programming multithread-safe. In order to avoid memory leak, we use a
+   * shared_ptr in order to correctly free the memory of the vectors when
+   * the global destructor is called.
+   */
   static std::vector<std::shared_ptr<const std::vector<double>>> recursive_coefficients;
   
+  
+  /**
+   * Main function to compute the co-efficients of the polyonial at degree p.
+   */
   static void compute_coefficients (const unsigned int p);
   
-  static const std::vector<double> &
-  get_coefficients (const unsigned int k);
+  
+  /**
+   * Get coefficients for constructor.
+   */
+  static const std::vector<double> & get_coefficients (const unsigned int k);
 };
 
 DEAL_II_NAMESPACE_CLOSE
