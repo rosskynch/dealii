@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2015 - 2016 by the deal.II authors
+// Copyright (C) 2015 - 2017 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -1920,7 +1920,7 @@ template <int dim>
 void FE_NedelecSZ<dim>::create_polynomials (const unsigned int degree)
 {
   // fill the 1d polynomials vector:
-  IntegratedLegendrePolynomials = integratedLegendreSZ::generate_complete_basis (degree + 1);
+  IntegratedLegendrePolynomials = IntegratedLegendreSZ::generate_complete_basis (degree + 1);
 }
 
 // explicit instantiations
