@@ -15,15 +15,13 @@
 
 #include <deal.II/fe/fe_nedelec_sz.h>
 
+#include <deal.II/base/std_cxx14/memory.h>
 
 DEAL_II_NAMESPACE_OPEN
 
 // Constructor:
 template <int dim>
 FE_NedelecSZ<dim>::FE_NedelecSZ (const unsigned int degree)
-//                                  const FiniteElementData<dim> &fe_data,
-//                                  const std::vector<bool> &restriction_is_additive_flags,
-//                                  const std::vector<ComponentMask> &nonzero_components);
 : 
 FiniteElement<dim,dim>
 (FiniteElementData<dim> (get_dpo_vector (degree), dim, degree + 1,
@@ -1868,12 +1866,11 @@ FE_NedelecSZ<dim>::get_name () const
 }
 
 template <int dim>
-std::unique_ptr<FiniteElement<dim, dim> >
-FE_NedelecSZ<dim>::clone() const
+std::unique_ptr<FiniteElement<dim,dim> >
+FE_NedelecSZ<dim>::clone () const
 {
-	return std_cxx14::make_unique<FE_NedelecSZ<dim> >(*this);
+  return std_cxx14::make_unique<FE_NedelecSZ<dim> >(*this);
 }
-
 
 template <int dim>
 std::vector<unsigned int> FE_NedelecSZ<dim>::get_dpo_vector (unsigned int degree)

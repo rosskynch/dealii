@@ -18,16 +18,10 @@
 
 #include <deal.II/base/derivative_form.h>
 #include <deal.II/base/qprojector.h>
-#include <deal.II/base/std_cxx14/memory.h>
-//#include <deal.II/base/polynomials_bdm.h>
-//#include <deal.II/base/polynomials_raviart_thomas.h>
-//#include <deal.II/base/polynomials_abf.h>
-//#include <deal.II/base/polynomials_nedelec.h>
-#include <deal.II/base/polynomials_nedelec_sz.h>
+#include <deal.II/base/polynomials_integrated_legendre_sz.h>
 #include <deal.II/fe/fe.h>
-#include <deal.II/fe/fe_poly_tensor.h> // can probably remove.
 #include <deal.II/fe/fe_values.h>
-#include <deal.II/fe/mapping_cartesian.h>
+#include <deal.II/fe/mapping.h>
 
 DEAL_II_NAMESPACE_OPEN
 
@@ -38,9 +32,6 @@ class FE_NedelecSZ : public FiniteElement<dim,dim>
 public:
   // Constructor
   FE_NedelecSZ (const unsigned int degree);
-//                 const FiniteElementData<dim> &fe_data,
-//                 const std::vector<bool> &restriction_is_additive_flags,
-//                 const std::vector<ComponentMask> &nonzero_components);
 
   // for documentation, see the FiniteElement base class
   virtual
@@ -49,7 +40,7 @@ public:
   
   virtual std::string get_name () const;
   
-  virtual std::unique_ptr<FiniteElement<dim, spacedim> >  FiniteElement<dim> *clone() const;
+  virtual std::unique_ptr<FiniteElement<dim,dim> > clone() const;
   
   // This element is vector-valued so throw an exception:
   virtual double shape_value (const unsigned int i,
