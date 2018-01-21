@@ -253,8 +253,8 @@ FE_NedelecSZ<dim>::get_data (
     case 2:
     {
       // Compute values of sigma & lambda and the sigma differences and lambda additions.
-      double sigma[n_q_points][lines_per_cell];
-      double lambda[n_q_points][lines_per_cell];
+      std::vector<std::vector<double>> sigma(n_q_points, std::vector<double> (lines_per_cell));
+      std::vector<std::vector<double>> lambda(n_q_points, std::vector<double> (lines_per_cell));
 
       for (unsigned int q=0; q<n_q_points; ++q)
         {
@@ -296,6 +296,7 @@ FE_NedelecSZ<dim>::get_data (
               sigma_imj_sign[i][j] = (i == j) ? 0 : sigma_imj_sign[i][j];
 
               // Now store the component which the sigma_i - sigma_j corresponds to:
+              sigma_imj_component[i][j] = 0;
               for (unsigned int d=0; d<dim; ++d)
                 {
                   int temp_imj = sigma_comp_signs[i][d] - sigma_comp_signs[j][d];
@@ -314,7 +315,21 @@ FE_NedelecSZ<dim>::get_data (
             }
         }
 
+      // Now compute the edge parameterisations for a single element
+      // with global numbering matching that of the reference element:
 
+      // resize the edge parameterisations
+      // TODO: Finish the computation of these. Will likely be a copy of the dim=3
+      //       version.
+      data->edge_sigma_values.resize(lines_per_cell);
+      data->edge_sigma_grads.resize(lines_per_cell);
+      for (unsigned int m=0; m<lines_per_cell; ++m)
+        {
+          data->edge_sigma_values[m].resize(n_q_points);
+
+          // sigma grads are constant in a cell (no need for quad points)
+          data->edge_sigma_grads[m].resize(dim);
+        }
 
       // Fill in edge_lambda_values, edge_lambda_grads_2d and edge_lambda_component.
       // These do not change with edge orientation so they may be computed up front.
@@ -529,8 +544,8 @@ FE_NedelecSZ<dim>::get_data (
     case 3:
     {
       // Compute values of sigma & lambda and the sigma differences and lambda additions.
-      double sigma[n_q_points][lines_per_cell];
-      double lambda[n_q_points][lines_per_cell];
+      std::vector<std::vector<double>> sigma(n_q_points, std::vector<double> (lines_per_cell));
+      std::vector<std::vector<double>> lambda(n_q_points, std::vector<double> (lines_per_cell));
       for (unsigned int q=0; q<n_q_points; ++q)
         {
           sigma[q][0] = (1.0 - p_list[q][0]) + (1.0 - p_list[q][1]) + (1 - p_list[q][2]);
@@ -1047,15 +1062,13 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
           // Adjust the edge_sigma_* for the current cell:
           for (unsigned int m=0; m<lines_per_cell; ++m)
             {
-              std::transform (edge_sigma_values[m].begin(),
-                              edge_sigma_values[m].end(),
+              std::transform (edge_sigma_values[m].begin(), edge_sigma_values[m].end(),
                               edge_sigma_values[m].begin(),
-                              std::bind1st (std::multiplies<double> (),(double) edge_sign[m]));
+                              std::bind1st (std::multiplies<double> (), static_cast<double>(edge_sign[m])));
 
-              std::transform (edge_sigma_grads[m].begin(),
-                              edge_sigma_grads[m].end(),
+              std::transform (edge_sigma_grads[m].begin(), edge_sigma_grads[m].end(),
                               edge_sigma_grads[m].begin(),
-                              std::bind1st (std::multiplies<double> (), (double) edge_sign[m]));
+                              std::bind1st (std::multiplies<double> (), static_cast<double>(edge_sign[m])));
             }
 
           // TODO: Make use of && cell_similarity != CellSimilarity::translation to avoid recomputing things we don't need.
@@ -1202,10 +1215,10 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
             {
               std::transform (edge_sigma_values[m].begin(), edge_sigma_values[m].end(),
                               edge_sigma_values[m].begin(),
-                              std::bind1st (std::multiplies<double> (),(double) edge_sign[m]));
+                              std::bind1st (std::multiplies<double> (), static_cast<double>(edge_sign[m])));
               std::transform (edge_sigma_grads[m].begin(), edge_sigma_grads[m].end(),
                               edge_sigma_grads[m].begin(),
-                              std::bind1st (std::multiplies<double> (), (double) edge_sign[m]));
+                              std::bind1st (std::multiplies<double> (), static_cast<double>(edge_sign[m])));
             }
 
           // Now calculate the edge-based shape functions:
