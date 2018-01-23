@@ -174,31 +174,31 @@ void create_triangulation (Triangulation<3> &tria, const bool face_orientation, 
   tria.create_triangulation (vertices, cells, SubCellData ());
 }
 
-void evaluate (const FiniteElement<3> &fe, const DoFHandler<3> &dof_handler_ref, const DoFHandler<3> &dof_handler)
+void evaluate (const FiniteElement<3> &fe, const DoFHandler<3> &dof_handler)
 {
   const FEValuesExtractors::Vector component (0);
   const Quadrature<3> quadrature(Point<3>(0.5, 0.5, 0.5));
-  FEValues<3> fe_values (fe, quadrature, update_quadrature_points | update_values);
+  FEValues<3> fe_values (fe, quadrature, update_quadrature_points | update_values | update_gradients);
 
-  for (DoFHandler<3>::active_cell_iterator cell = dof_handler_ref.begin_active (); cell != dof_handler_ref.end (); ++cell)
+  for (DoFHandler<3>::active_cell_iterator cell = dof_handler.begin_active (); cell != dof_handler.end (); ++cell)
     {
       fe_values.reinit (cell);
 
       for (unsigned int i = 0; i < fe.dofs_per_cell; ++i)
         {
-          deallog << fe_values[component].value(i, 0) << std::endl;
+          deallog << "DoF#" << i << ", value=[" << fe_values[component].value(i, 0) << "], curl=[" << fe_values[component].curl(i, 0) << "]" << std::endl;
         }
     }
 }
 
 void run (const bool face_orientation, const bool face_flip, const bool face_rotation)
 {
-  Triangulation<3> tria_ref;
-  create_reference_triangulation (tria_ref);
+//  Triangulation<3> tria_ref;
+//  create_reference_triangulation (tria_ref);
 
   FE_NedelecSZ<3> fe (1);
-  DoFHandler<3> dof_handler_ref (tria_ref);
-  dof_handler_ref.distribute_dofs (fe);
+//  DoFHandler<3> dof_handler_ref (tria_ref);
+//  dof_handler_ref.distribute_dofs (fe);
 
   Triangulation<3> tria;
   create_triangulation (tria, face_orientation, face_flip, face_rotation);
@@ -206,7 +206,7 @@ void run (const bool face_orientation, const bool face_flip, const bool face_rot
   DoFHandler<3> dof_handler (tria);
   dof_handler.distribute_dofs (fe);
 
-  evaluate (fe, dof_handler_ref, dof_handler);
+  evaluate (fe, dof_handler);
 }
 
 int main()
