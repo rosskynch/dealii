@@ -195,7 +195,7 @@ FE_NedelecSZ<dim>::get_data (
   data->update_each = update_each(update_flags) | update_once(update_flags);  // FIX: only update_each required
 
   // Useful quantities:
-  const unsigned int degree (this->degree-1); // not FE holds input degree+1
+  const unsigned int degree (this->degree-1); // note FE holds input degree+1
 
   const unsigned int vertices_per_cell = GeometryInfo<dim>::vertices_per_cell;
   const unsigned int lines_per_face = GeometryInfo<dim>::lines_per_face;
@@ -331,21 +331,28 @@ FE_NedelecSZ<dim>::get_data (
           data->edge_sigma_grads[m].resize(dim);
         }
 
-      // Fill in edge_lambda_values, edge_lambda_grads_2d and edge_lambda_component.
-      // These do not change with edge orientation so they may be computed up front.
-      //
-      // Note: we do not do the same for sigma, as they change with edge orientation.
+      // Fill the values for edge lambda and edge sigma:
+      const unsigned int
+      edge_sigma_direction[GeometryInfo<2>::lines_per_cell]
+        = {1, 1, 0, 0};
+
       data->edge_lambda_values.resize(lines_per_cell, std::vector<double> (n_q_points));
       data->edge_lambda_grads_2d.resize(lines_per_cell, std::vector<double> (dim));
       data->edge_lambda_component.resize(lines_per_cell);
-      for (unsigned int m=0; m<2; ++m)
+      for (unsigned int m=0; m<lines_per_cell; ++m)
         {
+          // e1=max(reference vertex numbering on this edge)
+          // e2=min(reference vertex numbering on this edge)
+          // Which is guaranteed to be:
           const unsigned int e1 (GeometryInfo<dim>::line_to_cell_vertices(m,1));
           const unsigned int e2 (GeometryInfo<dim>::line_to_cell_vertices(m,0));
           for (unsigned int q=0; q<n_q_points; ++q)
             {
+              data->edge_sigma_values[m][q] = data->sigma_imj_values[q][e2][e1];
               data->edge_lambda_values[m][q] = lambda[q][e1] + lambda[q][e2];
             }
+
+          data->edge_sigma_grads[m][edge_sigma_direction[m]] = -2.0;
         }
       data->edge_lambda_grads_2d[0] = {-1.0, 0.0};
       data->edge_lambda_grads_2d[1] = {1.0, 0.0};
