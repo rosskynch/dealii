@@ -1691,6 +1691,19 @@ void FE_NedelecSZ<dim>::fill_fe_values(
           const unsigned int first
             = data.shape_function_to_row_table[dof * this->n_components() +
                                                this->get_nonzero_components(dof).first_selected_component()];
+
+          for (unsigned int q=0; q<n_q_points; ++q)
+            {
+              for (unsigned int d1=0; d1<dim; ++d1)
+                {
+                  for (unsigned int d2=0; d2<dim; ++d2)
+                    {
+                      transformed_shape_grads[q][d1] -= data.shape_values(first+d2, q)
+                       * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
+                    }
+                }
+            }
+
           for (unsigned int q=0; q<n_q_points; ++q)
             {
               for (unsigned int d=0; d<dim; ++d)
@@ -1799,6 +1812,19 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
           const unsigned int first
             = data.shape_function_to_row_table[dof * this->n_components() +
                                                this->get_nonzero_components(dof).first_selected_component()];
+
+          for (unsigned int q=0; q<n_q_points; ++q)
+            {
+              for (unsigned int d1=0; d1<dim; ++d1)
+                {
+                  for (unsigned int d2=0; d2<dim; ++d2)
+                    {
+                      transformed_shape_grads[q][d1] -= data.shape_values(first+d2, q)
+                       * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
+                    }
+                }
+            }
+
           for (unsigned int q=0; q<n_q_points; ++q)
             {
               for (unsigned int d=0; d<dim; ++d)
@@ -1858,13 +1884,13 @@ FE_NedelecSZ<dim>::update_each (const UpdateFlags flags) const
     out |= update_values | update_covariant_transformation;
 
   if (flags & update_gradients)
-    out |= update_gradients |// update_values | // Not convinced we must have values with gradients
+    out |= update_gradients | update_values |
            update_jacobian_pushed_forward_grads |
            update_covariant_transformation;
 
   if (flags & update_hessians)
     //     Assert (false, ExcNotImplemented());
-    out |= update_hessians |// update_values | update_gradients | // Not convinced we must have values/gradients with hessians.
+    out |= update_hessians | update_values | update_gradients |
            update_jacobian_pushed_forward_grads |
            update_jacobian_pushed_forward_2nd_derivatives |
            update_covariant_transformation;

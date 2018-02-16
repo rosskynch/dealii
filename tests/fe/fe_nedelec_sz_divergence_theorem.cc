@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2003 - 2015 by the deal.II authors
+// Copyright (C) 2003 - 2018 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -14,24 +14,36 @@
 // ---------------------------------------------------------------------
 
 
-// check the consistency of the values and gradients for FE_NEdelecSZ by
-// comparing the sum of the integrals of all gradients with the flux over
-// the boundary by the divergence theorem.
+// check the correctness of fe_values.shape_gradient for FE_NedelecSZ by comparing
+// the integral of all shape gradients with the flux over the boundary by the
+// divergence theorem
 
 #include "../tests.h"
 #include <deal.II/base/function.h>
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/tria_boundary_lib.h>
+#include <deal.II/grid/manifold_lib.h>
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_raviart_thomas.h>
+#include <deal.II/fe/fe_nedelec.h>
 #include <deal.II/fe/fe_nedelec_sz.h>
+#include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
 #include <deal.II/fe/mapping_q1.h>
 
 #include <sstream>
+
+template <int dim>
+Tensor<1,dim> ones ()
+{
+  Tensor<1,dim> result;
+  for (unsigned int i=0; i<dim; ++i)
+    result[i] = 1.0;
+  return result;
+}
 
 template <int dim>
 void test (const Triangulation<dim> &tr,
@@ -74,44 +86,47 @@ void test (const Triangulation<dim> &tr,
 
       bool cell_ok = true;
 
-      FEValuesExtractors::Vector vec (0);
-      double bulk_integral = 0.0;
-      double boundary_integral = 0.0;
-      for (unsigned int i=0; i<fe_values.dofs_per_cell; ++i)
+      for (unsigned int c=0; c<fe.n_components(); ++c)
         {
-          for (unsigned int q=0; q<fe_values.n_quadrature_points; ++q)
+          FEValuesExtractors::Scalar single_component (c);
+
+          for (unsigned int i=0; i<fe_values.dofs_per_cell; ++i)
             {
-              double temp = 0.0;
-              for (unsigned int d=0; d<dim; ++d)
+              ss << "component=" << c
+                 << ", dof=" << i
+                 << std::endl;
+
+              Tensor<1,dim> bulk_integral;
+              for (unsigned int q=0; q<fe_values.n_quadrature_points; ++q)
                 {
-                  temp += fe_values[vec].gradient(i,q)[d][d];
+                  bulk_integral += fe_values[single_component].gradient(i,q) * fe_values.JxW(q);
                 }
 
-              bulk_integral += temp * fe_values.JxW(q);
-            }
-
-          for (unsigned int face=0; face<GeometryInfo<dim>::faces_per_cell; ++face)
-            {
-              fe_face_values.reinit(cell, face);
-              for (unsigned int q=0; q<fe_face_values.n_quadrature_points; ++q)
+              Tensor<1,dim> boundary_integral;
+              for (unsigned int face=0; face<GeometryInfo<dim>::faces_per_cell; ++face)
                 {
-                  boundary_integral += fe_face_values[vec].value(i,q)
-                                       * fe_face_values.normal_vector(q)
-                                       * fe_face_values.JxW(q);
+                  fe_face_values.reinit(cell,face);
+                  for (unsigned int q=0; q<fe_face_values.n_quadrature_points; ++q)
+                    {
+                      boundary_integral += fe_face_values[single_component].value (i,q)
+                                           * fe_face_values.normal_vector(q)
+                                           * fe_face_values.JxW(q);
+                    }
                 }
+
+              if ((bulk_integral-boundary_integral).norm_square() > tolerance * (bulk_integral.norm() + boundary_integral.norm()))
+                {
+                  deallog << "Failed:" << std::endl;
+                  deallog << ss.str() << std::endl;
+                  deallog << "    bulk integral=" << bulk_integral << std::endl;
+                  deallog << "boundary integral=" << boundary_integral << std::endl;
+                  deallog << "Error! difference between bulk and surface integrals is greater than " << tolerance << "!\n\n" << std::endl;
+                  cell_ok = false;
+                }
+
+              ss.str("");
             }
         }
-      if (bulk_integral-boundary_integral > tolerance)
-        {
-          deallog << "Failed:" << std::endl;
-          deallog << ss.str() << std::endl;
-          deallog << "    bulk integral=" << bulk_integral << std::endl;
-          deallog << "boundary integral=" << boundary_integral << std::endl;
-          deallog << "Error! difference between bulk and surface integrals is greater than " << tolerance << "!\n\n" << std::endl;
-          cell_ok = false;
-        }
-
-      ss.str("");
 
       deallog << (cell_ok? "OK: cell bulk and boundary integrals match...\n" : "Failed divergence test...\n") << std::endl;
     }
@@ -125,13 +140,12 @@ void test_hyper_ball(const double tolerance)
   Triangulation<dim> tr;
   GridGenerator::hyper_ball(tr);
 
-  static const HyperBallBoundary<dim> boundary;
-  tr.set_boundary (0, boundary);
+  static const SphericalManifold<dim> boundary;
+  tr.set_manifold (0, boundary);
 
-  //TODO: Disabled until reinit cost is reduced.
-  //tr.refine_global(1);
+//  tr.refine_global(1); // taking too long,
 
-  FE_NedelecSZ<dim> fe(2);
+  FE_NedelecSZ<dim> fe(1);
   test(tr, fe, tolerance);
 }
 
@@ -139,13 +153,13 @@ void test_hyper_ball(const double tolerance)
 int main()
 {
   std::ofstream logfile ("output");
-  deallog << std::setprecision (3);
+  deallog << std::setprecision (8);
 
   deallog.attach(logfile);
 
-  //TODO: Disabled until 2D is fixed.
-  //test_hyper_ball<2>(1e-6);  
+  test_hyper_ball<2>(1e-6);
   test_hyper_ball<3>(1e-6);
 
   deallog << "done..." << std::endl;
 }
+
