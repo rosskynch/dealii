@@ -33,13 +33,9 @@ FE_NedelecSZ<dim>::FE_NedelecSZ (const unsigned int degree)
   Assert (dim >= 2, ExcImpossibleInDim(dim));
 
   this->mapping_type = mapping_nedelec;
-  // Set up the table converting
-  // components to base
-  // components. Since we have only
-  // one base element, everything
-  // remains zero except the
-  // component in the base, which is
-  // the component itself
+  // Set up the table converting components to base components. Since we have only
+  // one base element, everything remains zero except the component in the base,
+  // which is the component itself.
   for (unsigned int comp=0; comp<this->n_components() ; ++comp)
     {
       this->component_to_base_table[comp].first.second = comp;
@@ -71,25 +67,6 @@ FE_NedelecSZ<dim>::shape_value_component (const unsigned int i,
   // Not implemented yet:
   Assert (false, ExcNotImplemented ());
   return 0.;
-  /*
-  Assert (i<this->dofs_per_cell, ExcIndexRange(i,0,this->dofs_per_cell));
-  Assert (component < dim, ExcIndexRange (component, 0, dim));
-
-  if (cached_point != p || cached_values.size() == 0)
-    {
-      cached_point = p;
-      cached_values.resize(poly_space.n());
-      poly_space.compute(p, cached_values, cached_grads, cached_grad_grads);
-    }
-
-  double s = 0;
-  if (inverse_node_matrix.n_cols() == 0)
-    return cached_values[i][component];
-  else
-    for (unsigned int j=0; j<inverse_node_matrix.n_cols(); ++j)
-      s += inverse_node_matrix(j,i) * cached_values[j][component];
-  return s;
-  */
 }
 
 
@@ -115,26 +92,6 @@ FE_NedelecSZ<dim>::shape_grad_component (const unsigned int i,
   // Not implemented yet:
   Assert (false, ExcNotImplemented ());
   return Tensor<1,dim> ();
-  /*
-  Assert (i<this->dofs_per_cell, ExcIndexRange(i,0,this->dofs_per_cell));
-  Assert (component < dim, ExcIndexRange (component, 0, dim));
-
-  if (cached_point != p || cached_grads.size() == 0)
-    {
-      cached_point = p;
-      cached_grads.resize(poly_space.n());
-      poly_space.compute(p, cached_values, cached_grads, cached_grad_grads);
-    }
-
-  Tensor<1,dim> s;
-  if (inverse_node_matrix.n_cols() == 0)
-    return cached_grads[i][component];
-  else
-    for (unsigned int j=0; j<inverse_node_matrix.n_cols(); ++j)
-      s += inverse_node_matrix(j,i) * cached_grads[j][component];
-
-  return s;
-  */
 }
 
 
@@ -159,26 +116,6 @@ FE_NedelecSZ<dim>::shape_grad_grad_component (const unsigned int i,
   // Not implemented yet:
   Assert (false, ExcNotImplemented ());
   return Tensor<2,dim>();
-  /*
-  Assert (i<this->dofs_per_cell, ExcIndexRange(i,0,this->dofs_per_cell));
-  Assert (component < dim, ExcIndexRange (component, 0, dim));
-
-  if (cached_point != p || cached_grad_grads.size() == 0)
-    {
-      cached_point = p;
-      cached_grad_grads.resize(poly_space.n());
-      poly_space.compute(p, cached_values, cached_grads, cached_grad_grads);
-    }
-
-  Tensor<2,dim> s;
-  if (inverse_node_matrix.n_cols() == 0)
-    return cached_grad_grads[i][component];
-  else
-    for (unsigned int j=0; j<inverse_node_matrix.n_cols(); ++j)
-      s += inverse_node_matrix(i,j) * cached_grad_grads[j][component];
-
-  return s;
-  */
 }
 
 
@@ -192,7 +129,7 @@ FE_NedelecSZ<dim>::get_data (
   dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &/*output_data*/) const
 {
   InternalData *data = new InternalData;
-  data->update_each = update_each(update_flags) | update_once(update_flags);  // FIX: only update_each required
+  data->update_each = update_each(update_flags) | update_once(update_flags);
 
   // Useful quantities:
   const unsigned int degree (this->degree-1); // note FE holds input degree+1
@@ -318,9 +255,7 @@ FE_NedelecSZ<dim>::get_data (
       // Now compute the edge parameterisations for a single element
       // with global numbering matching that of the reference element:
 
-      // resize the edge parameterisations
-      // TODO: Finish the computation of these. Will likely be a copy of the dim=3
-      //       version.
+      // Resize the edge parameterisations
       data->edge_sigma_values.resize(lines_per_cell);
       data->edge_sigma_grads.resize(lines_per_cell);
       for (unsigned int m=0; m<lines_per_cell; ++m)
@@ -338,7 +273,6 @@ FE_NedelecSZ<dim>::get_data (
 
       data->edge_lambda_values.resize(lines_per_cell, std::vector<double> (n_q_points));
       data->edge_lambda_grads_2d.resize(lines_per_cell, std::vector<double> (dim));
-      data->edge_lambda_component.resize(lines_per_cell);
       for (unsigned int m=0; m<lines_per_cell; ++m)
         {
           // e1=max(reference vertex numbering on this edge)
@@ -358,12 +292,6 @@ FE_NedelecSZ<dim>::get_data (
       data->edge_lambda_grads_2d[1] = {1.0, 0.0};
       data->edge_lambda_grads_2d[2] = {0.0, -1.0};
       data->edge_lambda_grads_2d[3] = {0.0, 1.0};
-
-      // TODO: decide if needed.
-      data->edge_lambda_component[0] = 0;
-      data->edge_lambda_component[1] = 0;
-      data->edge_lambda_component[2] = 1;
-      data->edge_lambda_component[3] = 1;
 
       // If the polynomial order is 0, then no more work to do:
       if (degree < 1)
@@ -463,9 +391,10 @@ FE_NedelecSZ<dim>::get_data (
               // for each polyc[d], c=x,y, contains the d-th derivative with respect to the
               // co-ordinate c.
 
-              // We only need poly values and 1st derivative for update_values,
-              // but need 2nd derivative too for update_gradients.
-              // TODO: will need to be updated if we're supporting update_hessians.
+              // We only need poly values and 1st derivative for update_values, but need the
+              // 2nd derivative too for update_gradients.
+              //
+              // Note that this will need to be updated if we're supporting update_hessians.
               const unsigned int poly_length( (flags & update_gradients) ? 3 : 2);
 
               std::vector<std::vector<double> > polyx(degree, std::vector<double> (poly_length));
@@ -929,8 +858,6 @@ FE_NedelecSZ<dim>::get_data (
                               const unsigned int dof_index3_1(cell_type3_offset1 + shift_ij);
                               const unsigned int dof_index3_2(cell_type3_offset2 + shift_ij);
                               const unsigned int dof_index3_3(cell_type3_offset3 + shift_ij);
-                              // Only need to fill in the non-zero values as the array is initialised to zero.
-                              // TODO: CHECK TRUE!!
                               for (unsigned int d1=0; d1<dim; ++d1)
                                 {
                                   for (unsigned int d2=0; d2<dim; ++d2)
@@ -978,8 +905,6 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
   //
   // It should be called by the fill_fe_*_values routines in order to complete the
   // basis set at quadrature points on the current cell for each edge.
-
-  // TODO: Add caching to make this more efficient.
 
   const UpdateFlags flags(fe_data.update_each);
   const unsigned int n_q_points = quadrature.size();
@@ -1032,7 +957,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
                   edge_sign[m] = 1.0;
                 }
             }
-          // TODO: tidy up these comments.. need to reorder things.
+
           // Define \sigma_{m} = sigma_{e^{m}_{2}} - sigma_{e^{m}_{2}}
           //        \lambda_{m} = \lambda_{e^{m}_{1}} + \lambda_{e^{m}_{2}}
           //
@@ -1077,8 +1002,6 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
                               edge_sigma_grads[m].begin(),
                               std::bind1st (std::multiplies<double> (), static_cast<double>(edge_sign[m])));
             }
-
-          // TODO: Make use of && cell_similarity != CellSimilarity::translation to avoid recomputing things we don't need.
 
           // If we want to generate shape gradients then we need second derivatives of the 1d polynomials,
           // but only first derivatives for the shape values.
@@ -1178,10 +1101,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
                   edge_sign[m] = 1.0;
                 }
             }
-          // TODO: re-order the comments so they flow better.
-          //       i.e. move info about the actual shape functions
-          //            after the parameterisation of edges, etc.
-          //
+
           // Define \sigma_{m} = sigma_{e^{m}_{2}} - sigma_{e^{m}_{2}}
           //        \lambda_{m} = \lambda_{e^{m}_{1}} + \lambda_{e^{m}_{2}}
           //
@@ -1208,8 +1128,8 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
           // 8 and 9 are the edges in the z dir at y=0. (sigma is a fn of z, lambda is a fn of x & y).
           // 10 and 11 are the edges in the z dir at y=1. (sigma is a fn of z, lambda is a fn of x & y).
           //
-          // More more info: see GeometryInfo for picture of the standard element.
-          //
+          // For more info: see GeometryInfo for picture of the standard element.
+
           // Copy over required edge-based data:
           std::vector<std::vector< double > > edge_sigma_values(fe_data.edge_sigma_values);
           std::vector<std::vector< double > > edge_lambda_values(fe_data.edge_lambda_values);
@@ -1239,7 +1159,6 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
               for (unsigned int q=0; q<n_q_points; ++q)
                 {
                   // precompute values of all 1d polynomials required:
-                  // TODO: Could avoid if statement by rearranging to use i=1; i<degree+1
                   if (degree>0)
                     {
                       for (unsigned int i=0; i<degree; ++i)
@@ -1250,14 +1169,10 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
                   if (flags & update_values)
                     {
                       // Lowest order shape functions:
-                      // TODO: could probably improve effiency of these loops - sigma_grads doesn't depend on q
-                      //       and lambda_values doesn't depend on d.
-                      //       Same goes for the update_gradients part.
                       for (unsigned int d=0; d<dim; ++d)
                         {
                           fe_data.shape_values[shift_m][q][d] = 0.5*edge_sigma_grads[m][d]*edge_lambda_values[m][q];
                         }
-                      // TODO: Could avoid if statement by rearranging to use i=1; i<degree+1
                       if (degree>0)
                         {
                           for (unsigned int i=0; i<degree; ++i)
@@ -1282,7 +1197,6 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
                                 = 0.5*edge_sigma_grads[m][d1]*edge_lambda_grads[m][q][d2];
                             }
                         }
-                      // TODO: Could avoid if statement by rearranging to use i=1; i<degree+1
                       if (degree>0)
                         {
                           for (unsigned int i=0; i<degree; ++i)
@@ -1329,8 +1243,6 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
   //
   // It should be called by the fill_fe_*_values routines in order to complete the
   // basis set at quadrature points on the current cell for each face.
-
-  // TODO: Add caching to make this more efficient.
 
   // Useful constants:
   const unsigned int degree (this->degree-1); // Note: constructor takes input degree + 1, so need to knock 1 off.
@@ -1442,15 +1354,6 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
             }
           // Now can generate the basis
           const unsigned int poly_length( (flags & update_gradients) ? 3 : 2);
-          // TODO: Remove if above works:
-          //         if (flags & update_gradients)
-          //         {
-          //           poly_length=3;
-          //         }
-          //         else if (flags & update_values)
-          //         {
-          //           poly_length=2;
-          //         }
           std::vector<std::vector<double> > polyxi(degree, std::vector<double> (poly_length));
           std::vector<std::vector<double> > polyeta(degree, std::vector<double> (poly_length));
 
@@ -1642,9 +1545,6 @@ void FE_NedelecSZ<dim>::fill_fe_values(
 
   const unsigned int dofs_per_cell (this->dofs_per_cell);
 
-  // TODO:
-  // Make use of && cell_similarity != CellSimilarity::translation to avoid recomputing things we don't need.
-  // May not be possible due to edge reorderings.
   if (flags & update_values)
     {
       // Now have all shape_values stored on the reference cell.
@@ -1669,8 +1569,6 @@ void FE_NedelecSZ<dim>::fill_fe_values(
             }
         }
     }
-  // TODO: streamline by moving into the same loop as the shape_values
-  //       can use similar style to the get_data function.
   if (flags & update_gradients)
     {
       // Now have all shape_grads stored on the reference cell.
@@ -1726,12 +1624,13 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
   const typename FiniteElement<dim,dim>::InternalDataBase        &fe_internal,
   dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &data) const
 {
-  // TODO: problem is that we don't have the full quadrature.. should use QProjector to create the 2D quadrature.
-
-  // TODO: For now I am effectively generating all of the shape function vals/grads, etc
-  //       On all quad points on all faces and then only using them for one face.
-  //       This is obviously inefficient. I should cache the cell number and cache
-  //       all of the shape_values/gradients etc and then reuse them for each face.
+  // Note for future improvement:
+  // We don't have the full quadrature - should use QProjector to create the 2D quadrature.
+  //
+  // For now I am effectively generating all of the shape function vals/grads, etc.
+  // On all quad points on all faces and then only using them for one face.
+  // This is obviously inefficient. I should cache the cell number and cache
+  // all of the shape_values/gradients etc and then reuse them for each face.
 
   // convert data object to internal
   // data for this class. fails with
@@ -1754,17 +1653,10 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
                        fe_data);
     }
 
-
-
   const UpdateFlags flags(fe_data.update_each);
   const unsigned int n_q_points = quadrature.size();
-
-  // TODO: Make sense of this: should we use the orientatation/flip/rotation information??
-  // offset determines which data set
-  // to take (all data sets for all
-  // faces are stored contiguously)
   const typename QProjector<dim>::DataSetDescriptor offset
-    = QProjector<dim>::DataSetDescriptor::face (face_no, // true, false, false, n_q_points);
+    = QProjector<dim>::DataSetDescriptor::face (face_no,
                                                 cell->face_orientation(face_no),
                                                 cell->face_flip(face_no),
                                                 cell->face_rotation(face_no),
@@ -1848,7 +1740,6 @@ void FE_NedelecSZ<dim>::fill_fe_subface_values(
   const typename FiniteElement<dim,dim>::InternalDataBase        &fe_internal,
   dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &data) const
 {
-  // TODO: imeplement this.
   Assert (false, ExcNotImplemented ());
 }
 
@@ -1863,8 +1754,6 @@ template <int dim>
 UpdateFlags
 FE_NedelecSZ<dim>::update_once (const UpdateFlags flags) const
 {
-  // TODO: Not sure if there is anything we can do here,
-  //       have used that from FE_PolyTensor for now.
   const bool values_once = (mapping_type == mapping_none);
 
   UpdateFlags out = update_default;
