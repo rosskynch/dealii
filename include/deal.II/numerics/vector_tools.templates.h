@@ -4785,13 +4785,13 @@ namespace VectorTools
 
           // Check this cell_idx belongs to the correct base_element, component and line:
           if (((dynamic_cast<const FESystem<dim>*> (&fe) != nullptr)
-                && (fe.system_to_base_index (cell_idx).first == base_indices)
-                && (lower_bound <= fe.system_to_base_index (cell_idx).second)
-                && (fe.system_to_base_index (cell_idx).second <= upper_bound))
+               && (fe.system_to_base_index (cell_idx).first == base_indices)
+               && (lower_bound <= fe.system_to_base_index (cell_idx).second)
+               && (fe.system_to_base_index (cell_idx).second <= upper_bound))
               || (((dynamic_cast<const FE_Nedelec<dim>*> (&fe) != nullptr)
-                || (dynamic_cast<const FE_NedelecSZ<dim>*> (&fe) != nullptr))
-                && (line * (degree + 1) <= face_idx)
-                && (face_idx <= (line + 1) * (degree + 1) - 1)))
+                   || (dynamic_cast<const FE_NedelecSZ<dim>*> (&fe) != nullptr))
+                  && (line * (degree + 1) <= face_idx)
+                  && (face_idx <= (line + 1) * (degree + 1) - 1)))
             {
               associated_edge_dof_to_face_dof[associated_edge_dof_index] = face_idx;
               ++associated_edge_dof_index;
@@ -5122,13 +5122,13 @@ namespace VectorTools
                   const unsigned int cell_idx = fe.face_to_cell_index(face_idx, face);
                   // Check this cell_idx belongs to the correct base_element, component and line:
                   if (((dynamic_cast<const FESystem<dim>*> (&fe) != nullptr)
-                        && (fe.system_to_base_index (cell_idx).first == base_indices)
-                        && (lower_bound <= fe.system_to_base_index (cell_idx).second)
-                        && (fe.system_to_base_index (cell_idx).second <= upper_bound))
+                       && (fe.system_to_base_index (cell_idx).first == base_indices)
+                       && (lower_bound <= fe.system_to_base_index (cell_idx).second)
+                       && (fe.system_to_base_index (cell_idx).second <= upper_bound))
                       || (((dynamic_cast<const FE_Nedelec<dim>*> (&fe) != nullptr)
-                        || (dynamic_cast<const FE_NedelecSZ<dim>*> (&fe) != nullptr))
-                        && (line * (degree + 1) <= face_idx)
-                        && (face_idx <= (line + 1) * (degree + 1) - 1)))
+                           || (dynamic_cast<const FE_NedelecSZ<dim>*> (&fe) != nullptr))
+                          && (line * (degree + 1) <= face_idx)
+                          && (face_idx <= (line + 1) * (degree + 1) - 1)))
                     {
                       associated_edge_dof_to_face_dof[line][associated_edge_dof_index] = face_idx;
                       ++associated_edge_dof_index;
@@ -5162,7 +5162,7 @@ namespace VectorTools
             {
               const unsigned int cell_idx = fe.face_to_cell_index (face_idx, face);
               if (((dynamic_cast<const FESystem<dim>*> (&fe) != nullptr)
-                  && (fe.system_to_base_index (cell_idx).first == base_indices))
+                   && (fe.system_to_base_index (cell_idx).first == base_indices))
                   || (dynamic_cast<const FE_Nedelec<dim>*> (&fe) != nullptr)
                   || (dynamic_cast<const FE_NedelecSZ<dim>*> (&fe) != nullptr))
                 {
@@ -5363,7 +5363,7 @@ namespace VectorTools
                           if (dynamic_cast<const FESystem<dim>*> (&cell->get_fe ()) == nullptr)
                             {
                               AssertThrow ((dynamic_cast<const FE_Nedelec<dim>*> (&cell->get_fe ()) != nullptr)
-                                            || (dynamic_cast<const FE_NedelecSZ<dim>*> (&cell->get_fe ()) != nullptr),
+                                           || (dynamic_cast<const FE_NedelecSZ<dim>*> (&cell->get_fe ()) != nullptr),
                                            typename FiniteElement<dim>::ExcInterpolationNotImplemented ());
 
                             }

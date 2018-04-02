@@ -68,7 +68,7 @@ template <int dim>
 class FE_NedelecSZ : public FiniteElement<dim,dim>
 {
 public:
-  /** 
+  /**
   * Constructor for an element of given @p degree.
   */
   FE_NedelecSZ (const unsigned int degree);
@@ -266,7 +266,7 @@ protected:
     *
     * Note that the gradient of the edge parametrisation is constant on an
     * edge, so we do not need to store it at every quadrature point.
-    */ 
+    */
     std::vector<std::vector<std::vector<double> > > sigma_imj_grads;
 
     /**
@@ -297,7 +297,7 @@ protected:
     std::vector<std::vector<double> > edge_sigma_grads;
 
     /**
-    * Storage for edge extension parameters at quadrature points. These are 
+    * Storage for edge extension parameters at quadrature points. These are
     * stored for the 12 edges such that the global vertex numbering would
     * follow the order defined by the "standard" deal.II cell.
     *
@@ -405,7 +405,7 @@ private:
   * Populates cell-dependent edge-based shape functions on the given
   * InternalData object.
   */
-  void fill_edge_values(const typename Triangulation<dim,dim>::cell_iterator &cell,  
+  void fill_edge_values(const typename Triangulation<dim,dim>::cell_iterator &cell,
                         const Quadrature<dim>                                &quadrature,
                         const InternalData                                   &fedata) const;
 
@@ -413,7 +413,7 @@ private:
   * Populates the cell-dependent face-based shape functions on the given
   * InternalData object.
   */
-  void fill_face_values(const typename Triangulation<dim,dim>::cell_iterator &cell,  
+  void fill_face_values(const typename Triangulation<dim,dim>::cell_iterator &cell,
                         const Quadrature<dim>                                &quadrature,
                         const InternalData                                   &fedata) const;
 };

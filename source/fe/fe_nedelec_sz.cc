@@ -1597,7 +1597,7 @@ void FE_NedelecSZ<dim>::fill_fe_values(
                   for (unsigned int d2=0; d2<dim; ++d2)
                     {
                       transformed_shape_grads[q][d1] -= data.shape_values(first+d2, q)
-                       * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
+                                                        * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
                     }
                 }
             }
@@ -1712,7 +1712,7 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
                   for (unsigned int d2=0; d2<dim; ++d2)
                     {
                       transformed_shape_grads[q][d1] -= data.shape_values(first+d2, q)
-                       * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
+                                                        * mapping_data.jacobian_pushed_forward_grads[q][d2][d1];
                     }
                 }
             }
