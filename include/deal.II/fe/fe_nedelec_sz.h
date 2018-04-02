@@ -382,7 +382,7 @@ private:
   * 2 = face (which is a cell in 2D)
   * 3 = cell
   */
-  static std::vector<unsigned int> get_dpo_vector (unsigned int degree);
+  static std::vector<unsigned int> get_dpo_vector (const unsigned int degree);
 
   /**
    * Internal storage for all required integrated Legendre polynomials.
@@ -397,9 +397,8 @@ private:
 
   /**
   * Returns the number of DoFs in the basis set.
-  * TODO: Rename.
   */
-  unsigned int compute_n_pols (unsigned int degree);
+  unsigned int compute_num_dofs (const unsigned int degree) const;
 
   /**
   * Populates cell-dependent edge-based shape functions on the given

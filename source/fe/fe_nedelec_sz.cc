@@ -26,9 +26,9 @@ FE_NedelecSZ<dim>::FE_NedelecSZ (const unsigned int degree)
   FiniteElement<dim,dim>
   (FiniteElementData<dim> (get_dpo_vector (degree), dim, degree + 1,
                            FiniteElementData<dim>::Hcurl),
-   std::vector<bool> (compute_n_pols (degree), true),
-   std::vector<ComponentMask>(compute_n_pols (degree),
-                              std::vector<bool> (dim, true) ) )
+   std::vector<bool> (compute_num_dofs(degree), true),
+   std::vector<ComponentMask> (compute_num_dofs(degree),
+                               std::vector<bool> (dim, true) ) )
 {
   Assert (dim >= 2, ExcImpossibleInDim(dim));
 
@@ -1812,7 +1812,7 @@ FE_NedelecSZ<dim>::clone () const
 }
 
 template <int dim>
-std::vector<unsigned int> FE_NedelecSZ<dim>::get_dpo_vector (unsigned int degree)
+std::vector<unsigned int> FE_NedelecSZ<dim>::get_dpo_vector (const unsigned int degree)
 {
   // internal function to return a vector of "dofs per object"
   // where the objects inside the vector refer to:
@@ -1832,7 +1832,7 @@ std::vector<unsigned int> FE_NedelecSZ<dim>::get_dpo_vector (unsigned int degree
 }
 
 template <int dim>
-unsigned int FE_NedelecSZ<dim>::compute_n_pols (unsigned int degree)
+unsigned int FE_NedelecSZ<dim>::compute_num_dofs (const unsigned int degree) const
 {
   // Internal function to compute the number of DoFs
   // for a given dimension & polynomial order.
