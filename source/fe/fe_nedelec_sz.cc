@@ -121,14 +121,14 @@ FE_NedelecSZ<dim>::shape_grad_grad_component (const unsigned int i,
 
 
 template <int dim>
-typename FiniteElement<dim,dim>::InternalDataBase *
+std::unique_ptr<typename FiniteElement<dim,dim>::InternalDataBase>
 FE_NedelecSZ<dim>::get_data (
-  const UpdateFlags                                               update_flags,
-  const Mapping<dim,dim>                                         &/*mapping*/,
-  const Quadrature<dim>                                          &quadrature,
-  dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &/*output_data*/) const
+  const UpdateFlags                                                             update_flags,
+  const Mapping<dim,dim>                                                       &/*mapping*/,
+  const Quadrature<dim>                                                        &quadrature,
+  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &/*output_data*/) const
 {
-  InternalData *data = new InternalData;
+  std::unique_ptr<InternalData> data(new InternalData);
   data->update_each = update_each(update_flags) | update_once(update_flags);
 
   // Useful quantities:
@@ -1512,14 +1512,14 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
 
 template <int dim>
 void FE_NedelecSZ<dim>::fill_fe_values(
-  const typename Triangulation<dim,dim>::cell_iterator           &cell,
-  const CellSimilarity::Similarity                                cell_similarity,
-  const Quadrature<dim>                                          &quadrature,
-  const Mapping<dim,dim>                                         &mapping,
-  const typename Mapping<dim,dim>::InternalDataBase              &mapping_internal,
-  const dealii::internal::FEValues::MappingRelatedData<dim, dim> &mapping_data,
-  const typename FiniteElement<dim,dim>::InternalDataBase        &fe_internal,
-  dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &data) const
+  const typename Triangulation<dim,dim>::cell_iterator                         &cell,
+  const CellSimilarity::Similarity                                              cell_similarity,
+  const Quadrature<dim>                                                        &quadrature,
+  const Mapping<dim,dim>                                                       &mapping,
+  const typename Mapping<dim,dim>::InternalDataBase                            &mapping_internal,
+  const dealii::internal::FEValuesImplementation::MappingRelatedData<dim, dim> &mapping_data,
+  const typename FiniteElement<dim,dim>::InternalDataBase                      &fe_internal,
+  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &data) const
 {
 
   // Convert to the correct internal data class for this FE class.
@@ -1616,14 +1616,14 @@ void FE_NedelecSZ<dim>::fill_fe_values(
 
 template <int dim>
 void FE_NedelecSZ<dim>::fill_fe_face_values (
-  const typename Triangulation<dim,dim>::cell_iterator           &cell,
-  const unsigned int                                              face_no,
-  const Quadrature<dim-1>                                        &quadrature,
-  const Mapping<dim,dim>                                         &mapping,
-  const typename Mapping<dim,dim>::InternalDataBase              &mapping_internal,
-  const dealii::internal::FEValues::MappingRelatedData<dim, dim> &mapping_data,
-  const typename FiniteElement<dim,dim>::InternalDataBase        &fe_internal,
-  dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &data) const
+  const typename Triangulation<dim,dim>::cell_iterator                         &cell,
+  const unsigned int                                                            face_no,
+  const Quadrature<dim-1>                                                      &quadrature,
+  const Mapping<dim,dim>                                                       &mapping,
+  const typename Mapping<dim,dim>::InternalDataBase                            &mapping_internal,
+  const dealii::internal::FEValuesImplementation::MappingRelatedData<dim, dim> &mapping_data,
+  const typename FiniteElement<dim,dim>::InternalDataBase                      &fe_internal,
+  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &data) const
 {
   // Note for future improvement:
   // We don't have the full quadrature - should use QProjector to create the 2D quadrature.
@@ -1731,15 +1731,15 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
 
 template <int dim>
 void FE_NedelecSZ<dim>::fill_fe_subface_values(
-  const typename Triangulation<dim,dim>::cell_iterator           &cell,
-  const unsigned int                                              face_no,
-  const unsigned int                                              sub_no,
-  const Quadrature<dim-1>                                        &quadrature,
-  const Mapping<dim,dim>                                         &mapping,
-  const typename Mapping<dim,dim>::InternalDataBase              &mapping_internal,
-  const dealii::internal::FEValues::MappingRelatedData<dim, dim> &mapping_data,
-  const typename FiniteElement<dim,dim>::InternalDataBase        &fe_internal,
-  dealii::internal::FEValues::FiniteElementRelatedData<dim, dim> &data) const
+  const typename Triangulation<dim,dim>::cell_iterator                         &cell,
+  const unsigned int                                                            face_no,
+  const unsigned int                                                            sub_no,
+  const Quadrature<dim-1>                                                      &quadrature,
+  const Mapping<dim,dim>                                                       &mapping,
+  const typename Mapping<dim,dim>::InternalDataBase                            &mapping_internal,
+  const dealii::internal::FEValuesImplementation::MappingRelatedData<dim, dim> &mapping_data,
+  const typename FiniteElement<dim,dim>::InternalDataBase                      &fe_internal,
+  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &data) const
 {
   Assert (false, ExcNotImplemented ());
 }
