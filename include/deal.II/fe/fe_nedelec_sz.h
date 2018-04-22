@@ -88,41 +88,41 @@ public:
   * throw an exception.
   */
   virtual double shape_value (const unsigned int i,
-                              const Point<dim> &p) const;
+                              const Point<dim>  &p) const;
 
   /**
   * Not implemented.
   */
   virtual double shape_value_component (const unsigned int i,
-                                        const Point<dim> &p,
+                                        const Point<dim>  &p,
                                         const unsigned int component) const;
 
   /**
   * This element is vector-valued so this function will
   * throw an exception.
   */
-  virtual Tensor<1,dim> shape_grad (const unsigned int  i,
-                                    const Point<dim>   &p) const;
+  virtual Tensor<1,dim> shape_grad (const unsigned int i,
+                                    const Point<dim>  &p) const;
 
   /**
   * Not implemented.
   */
   virtual Tensor<1,dim> shape_grad_component (const unsigned int i,
-                                              const Point<dim> &p,
+                                              const Point<dim>  &p,
                                               const unsigned int component) const;
 
   /**
   * This element is vector-valued so this function will
   * throw an exception.
   */
-  virtual Tensor<2,dim> shape_grad_grad (const unsigned int  i,
-                                         const Point<dim> &p) const;
+  virtual Tensor<2,dim> shape_grad_grad (const unsigned int i,
+                                         const Point<dim>  &p) const;
 
   /**
   * Not implemented.
   */
   virtual Tensor<2,dim> shape_grad_grad_component (const unsigned int i,
-                                                   const Point<dim> &p,
+                                                   const Point<dim>  &p,
                                                    const unsigned int component) const;
 
   /**
@@ -149,9 +149,9 @@ protected:
   virtual
   std::unique_ptr<typename FiniteElement<dim,dim>::InternalDataBase>
   get_data (const UpdateFlags                                                             update_flags,
-            const Mapping<dim,dim>                                                       &/*mapping*/,
+            const Mapping<dim,dim>                                                       &mapping,
             const Quadrature<dim>                                                        &quadrature,
-            dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &/*output_data*/) const;
+            dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &output_data) const;
 
   /**
   * Compute information about the shape functions on the cell denoted by the

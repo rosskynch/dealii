@@ -48,8 +48,8 @@ FE_NedelecSZ<dim>::FE_NedelecSZ (const unsigned int degree)
 // Shape functions:
 template <int dim>
 double
-FE_NedelecSZ<dim>::shape_value (const unsigned int, const Point<dim> &) const
-
+FE_NedelecSZ<dim>::shape_value (const unsigned int /*i*/,
+                                const Point<dim>  &/*p*/) const
 {
   typedef    FiniteElement<dim,dim> FEE;
   Assert(false, typename FEE::ExcFENotPrimitive());
@@ -60,9 +60,9 @@ FE_NedelecSZ<dim>::shape_value (const unsigned int, const Point<dim> &) const
 
 template <int dim>
 double
-FE_NedelecSZ<dim>::shape_value_component (const unsigned int i,
-                                          const Point<dim> &p,
-                                          const unsigned int component) const
+FE_NedelecSZ<dim>::shape_value_component (const unsigned int /*i*/,
+                                          const Point<dim>  &/*p*/,
+                                          const unsigned int /*component*/) const
 {
   // Not implemented yet:
   Assert (false, ExcNotImplemented ());
@@ -73,8 +73,8 @@ FE_NedelecSZ<dim>::shape_value_component (const unsigned int i,
 
 template <int dim>
 Tensor<1,dim>
-FE_NedelecSZ<dim>::shape_grad (const unsigned int,
-                               const Point<dim> &) const
+FE_NedelecSZ<dim>::shape_grad (const unsigned int /*i*/,
+                               const Point<dim>  &/*p*/) const
 {
   typedef    FiniteElement<dim,dim> FEE;
   Assert(false, typename FEE::ExcFENotPrimitive());
@@ -85,11 +85,10 @@ FE_NedelecSZ<dim>::shape_grad (const unsigned int,
 
 template <int dim>
 Tensor<1,dim>
-FE_NedelecSZ<dim>::shape_grad_component (const unsigned int i,
-                                         const Point<dim> &p,
-                                         const unsigned int component) const
+FE_NedelecSZ<dim>::shape_grad_component (const unsigned int /*i*/,
+                                         const Point<dim>  &/*p*/,
+                                         const unsigned int /*component*/) const
 {
-  // Not implemented yet:
   Assert (false, ExcNotImplemented ());
   return Tensor<1,dim> ();
 }
@@ -98,7 +97,8 @@ FE_NedelecSZ<dim>::shape_grad_component (const unsigned int i,
 
 template <int dim>
 Tensor<2,dim>
-FE_NedelecSZ<dim>::shape_grad_grad (const unsigned int, const Point<dim> &) const
+FE_NedelecSZ<dim>::shape_grad_grad (const unsigned int /*i*/,
+                                    const Point<dim>  &/*p*/) const
 {
   typedef    FiniteElement<dim,dim> FEE;
   Assert(false, typename FEE::ExcFENotPrimitive());
@@ -109,11 +109,10 @@ FE_NedelecSZ<dim>::shape_grad_grad (const unsigned int, const Point<dim> &) cons
 
 template <int dim>
 Tensor<2,dim>
-FE_NedelecSZ<dim>::shape_grad_grad_component (const unsigned int i,
-                                              const Point<dim> &p,
-                                              const unsigned int component) const
+FE_NedelecSZ<dim>::shape_grad_grad_component (const unsigned int /*i*/,
+                                              const Point<dim>  &/*p*/,
+                                              const unsigned int /*component*/) const
 {
-  // Not implemented yet:
   Assert (false, ExcNotImplemented ());
   return Tensor<2,dim>();
 }
@@ -132,22 +131,14 @@ FE_NedelecSZ<dim>::get_data (
   data->update_each = update_each(update_flags) | update_once(update_flags);
 
   // Useful quantities:
-  const unsigned int degree (this->degree-1); // note FE holds input degree+1
+  const unsigned int degree (this->degree-1); // Note: FE holds input degree+1
 
   const unsigned int vertices_per_cell = GeometryInfo<dim>::vertices_per_cell;
-  const unsigned int lines_per_face = GeometryInfo<dim>::lines_per_face;
   const unsigned int lines_per_cell = GeometryInfo<dim>::lines_per_cell;
   const unsigned int faces_per_cell = GeometryInfo<dim>::faces_per_cell;
 
-  const unsigned int dofs_per_cell = this->dofs_per_cell;
-  const unsigned int dofs_per_line = this->dofs_per_line;
-  const unsigned int dofs_per_quad = this->dofs_per_quad;
-  const unsigned int dofs_per_face = this->dofs_per_face;
-  const unsigned int dofs_per_hex = this->dofs_per_hex;
-
-  const unsigned int n_line_dofs = dofs_per_line*lines_per_cell;
-  const unsigned int n_face_dofs = dofs_per_quad*faces_per_cell;
-  const unsigned int n_cell_dofs = (dim == 2) ? dofs_per_quad : dofs_per_hex;
+  const unsigned int n_line_dofs = this->dofs_per_line*lines_per_cell;
+  const unsigned int n_face_dofs = this->dofs_per_quad*faces_per_cell;
 
   const UpdateFlags flags(data->update_each);
   const unsigned int n_q_points = quadrature.size();
@@ -167,13 +158,13 @@ FE_NedelecSZ<dim>::get_data (
   if (flags & update_values)
     {
       data->shape_values.resize(
-        dofs_per_cell, std::vector<Tensor<1,dim>> (n_q_points));
+        this->dofs_per_cell, std::vector<Tensor<1,dim>> (n_q_points));
     }
 
   if (flags & update_gradients)
     {
       data->shape_grads.resize(
-        dofs_per_cell, std::vector<DerivativeForm<1, dim, dim> > (n_q_points));
+        this->dofs_per_cell, std::vector<DerivativeForm<1, dim, dim> > (n_q_points));
     }
   // Not implementing second derivatives yet:
   if (flags & update_hessians)
@@ -921,8 +912,6 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
   const unsigned int vertices_per_line (2);
   const unsigned int lines_per_cell (GeometryInfo<dim>::lines_per_cell);
 
-  const unsigned int dofs_per_line (this->dofs_per_line);
-
   // Calculate edge orderings:
   std::vector<std::vector<unsigned int>> edge_order(lines_per_cell,
                                                     std::vector<unsigned int> (vertices_per_line));
@@ -1009,7 +998,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
 
           for (unsigned int m=0; m<lines_per_cell; ++m)
             {
-              const unsigned int shift_m (m*dofs_per_line);
+              const unsigned int shift_m (m*this->dofs_per_line);
               for (unsigned int q=0; q<n_q_points; ++q)
                 {
                   // Only compute 1d polynomials if degree>0.
@@ -1155,7 +1144,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
           std::vector<std::vector<double> > poly(degree, std::vector<double> (poly_length));
           for (unsigned int m=0; m<lines_per_cell; ++m)
             {
-              const unsigned int shift_m(m*dofs_per_line);
+              const unsigned int shift_m(m*this->dofs_per_line);
               for (unsigned int q=0; q<n_q_points; ++q)
                 {
                   // precompute values of all 1d polynomials required:
@@ -1246,7 +1235,6 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
 
   // Useful constants:
   const unsigned int degree (this->degree-1); // Note: constructor takes input degree + 1, so need to knock 1 off.
-  const unsigned int superdegree (this->degree);
 
   // Do nothing if FE degree is 0.
   if (degree>0)
@@ -1263,22 +1251,11 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
                  ExcDimensionMismatch(fe_data.shape_values[0].size(), n_q_points));
 
           // Useful geometry info:
-          const unsigned int vertices_per_line (2);
           const unsigned int vertices_per_face (GeometryInfo<dim>::vertices_per_face);
-          const unsigned int lines_per_face (GeometryInfo<dim>::lines_per_face);
-          const unsigned int lines_per_cell (GeometryInfo<dim>::lines_per_cell);
           const unsigned int faces_per_cell (GeometryInfo<dim>::faces_per_cell);
 
           // DoF info:
-          const unsigned int dofs_per_quad (this->dofs_per_quad);
-          const unsigned int dofs_per_hex (this->dofs_per_hex);
-
-          const unsigned int dofs_per_line (this->dofs_per_line);
-          const unsigned int dofs_per_face (this->dofs_per_face);
-          const unsigned int dofs_per_cell (this->dofs_per_cell);
-
-          const unsigned int n_line_dofs = dofs_per_line*lines_per_cell;
-          const unsigned int n_face_dofs = dofs_per_quad*faces_per_cell;
+          const unsigned int n_line_dofs = this->dofs_per_line*GeometryInfo<dim>::lines_per_cell;
 
           // First we find the global face orientations on the current cell.
           std::vector<std::vector<unsigned int> > face_orientation(faces_per_cell,
@@ -1361,7 +1338,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
           // Loop through quad points:
           for (unsigned int m=0; m<faces_per_cell; ++m)
             {
-              const unsigned int shift_m(m*dofs_per_quad);
+              const unsigned int shift_m(m*this->dofs_per_quad);
               // Calculate the offsets for each face-based shape function:
               //
               // Type-1 (gradients)
@@ -1513,7 +1490,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
 template <int dim>
 void FE_NedelecSZ<dim>::fill_fe_values(
   const typename Triangulation<dim,dim>::cell_iterator                         &cell,
-  const CellSimilarity::Similarity                                              cell_similarity,
+  const CellSimilarity::Similarity                                              /*cell_similarity*/,
   const Quadrature<dim>                                                        &quadrature,
   const Mapping<dim,dim>                                                       &mapping,
   const typename Mapping<dim,dim>::InternalDataBase                            &mapping_internal,
@@ -1544,14 +1521,12 @@ void FE_NedelecSZ<dim>::fill_fe_values(
   Assert(!(flags & update_values) || fe_data.shape_values[0].size() == n_q_points,
          ExcDimensionMismatch(fe_data.shape_values[0].size(), n_q_points));
 
-  const unsigned int dofs_per_cell (this->dofs_per_cell);
-
   if (flags & update_values)
     {
       // Now have all shape_values stored on the reference cell.
       // Must now transform to the physical cell.
       std::vector<Tensor<1,dim>> transformed_shape_values(n_q_points);
-      for (unsigned int dof=0; dof<dofs_per_cell; ++dof)
+      for (unsigned int dof=0; dof<this->dofs_per_cell; ++dof)
         {
           const unsigned int first
             = data.shape_function_to_row_table[dof * this->n_components() +
@@ -1576,7 +1551,7 @@ void FE_NedelecSZ<dim>::fill_fe_values(
       // Must now transform to the physical cell.
       std::vector<Tensor<2,dim>> input(n_q_points);
       std::vector<Tensor<2,dim>> transformed_shape_grads(n_q_points);
-      for (unsigned int dof=0; dof<dofs_per_cell; ++dof)
+      for (unsigned int dof=0; dof<this->dofs_per_cell; ++dof)
         {
           for (unsigned int q=0; q<n_q_points; ++q)
             {
@@ -1663,14 +1638,12 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
                                                 cell->face_rotation(face_no),
                                                 n_q_points);
 
-  const unsigned int dofs_per_cell (this->dofs_per_cell);
-
   if (flags & update_values)
     {
       // Now have all shape_values stored on the reference cell.
       // Must now transform to the physical cell.
       std::vector<Tensor<1,dim>> transformed_shape_values(n_q_points);
-      for (unsigned int dof=0; dof<dofs_per_cell; ++dof)
+      for (unsigned int dof=0; dof<this->dofs_per_cell; ++dof)
         {
           mapping.transform (make_array_view(fe_data.shape_values[dof], offset, n_q_points),
                              mapping_covariant,
@@ -1695,7 +1668,7 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
       // Now have all shape_grads stored on the reference cell.
       // Must now transform to the physical cell.
       std::vector<Tensor<2,dim>> transformed_shape_grads(n_q_points);
-      for (unsigned int dof=0; dof<dofs_per_cell; ++dof)
+      for (unsigned int dof=0; dof<this->dofs_per_cell; ++dof)
         {
           mapping.transform(make_array_view(fe_data.shape_grads[dof], offset, n_q_points),
                             mapping_covariant_gradient,
@@ -1731,15 +1704,15 @@ void FE_NedelecSZ<dim>::fill_fe_face_values (
 
 template <int dim>
 void FE_NedelecSZ<dim>::fill_fe_subface_values(
-  const typename Triangulation<dim,dim>::cell_iterator                         &cell,
-  const unsigned int                                                            face_no,
-  const unsigned int                                                            sub_no,
-  const Quadrature<dim-1>                                                      &quadrature,
-  const Mapping<dim,dim>                                                       &mapping,
-  const typename Mapping<dim,dim>::InternalDataBase                            &mapping_internal,
-  const dealii::internal::FEValuesImplementation::MappingRelatedData<dim, dim> &mapping_data,
-  const typename FiniteElement<dim,dim>::InternalDataBase                      &fe_internal,
-  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &data) const
+  const typename Triangulation<dim,dim>::cell_iterator                         &/*cell*/,
+  const unsigned int                                                            /*face_no*/,
+  const unsigned int                                                            /*sub_no*/,
+  const Quadrature<dim-1>                                                      &/*quadrature*/,
+  const Mapping<dim,dim>                                                       &/*mapping*/,
+  const typename Mapping<dim,dim>::InternalDataBase                            &/*mapping_internal*/,
+  const dealii::internal::FEValuesImplementation::MappingRelatedData<dim, dim> &/*mapping_data*/,
+  const typename FiniteElement<dim,dim>::InternalDataBase                      &/*fe_internal*/,
+  dealii::internal::FEValuesImplementation::FiniteElementRelatedData<dim, dim> &/*data*/) const
 {
   Assert (false, ExcNotImplemented ());
 }
