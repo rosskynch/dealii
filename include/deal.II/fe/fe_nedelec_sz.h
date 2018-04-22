@@ -55,6 +55,8 @@ DEAL_II_NAMESPACE_OPEN
 * vertices are decided such that the second has a higher global vertex numbering
 * than the fourth.
 *
+* Note that this element does not support non-conforming meshes at this time.
+*
 * Further details on this element, including some benchmarking, can be
 * in the paper R. Kynch, P. Ledger: <b>Resolving the sign conflict
 * problem for hp–hexahedral Nédélec elements with application to eddy
@@ -227,7 +229,7 @@ protected:
 
     /**
     * Storage for shape function gradients on the reference element. We only
-    * pre-computecell-based DoFs, as the edge- and face-based DoFs depend on
+    * pre-compute cell-based DoFs, as the edge- and face-based DoFs depend on
     * the cell.
     *
     * Due to the cell-dependent DoFs, this variable is declared mutable.
@@ -237,14 +239,13 @@ protected:
     /**
     * Storage for all possible edge parameterisation between vertices. These
     * are required in the computation of edge- and face-based DoFs, which are
-    * are cell-dependent.
+    * cell-dependent.
     *
     * The edge parameterisation of an edge, E, starting at vertex i and ending
     * at vertex j is given by \sigma_{E} = \sigma_{i} - \sigma{j}.
     *
-    * sigma_imj_values[q][i][j] stores gives the value of the edge
-    * parametrisation connected by vertices i and j at the q-th quadrature.
-    * point.
+    * sigma_imj_values[q][i][j] stores the value of the edge parametrisation
+    * connected by vertices i and j at the q-th quadrature point.
     *
     * Note that not all of the i and j combinations result in valid edges on
     * the hexahedral cell, but they are computed in this fashion for use with

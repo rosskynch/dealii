@@ -707,7 +707,7 @@ FE_NedelecSZ<dim>::get_data (
               //
               // 0 <= i,j,k < degree. (subtypes in groups of degree*degree*degree)
               //
-              // here we order so that alll of subtype 1 comes first, then subtype 2.
+              // here we order so that all of subtype 1 comes first, then subtype 2.
               const unsigned int cell_type2_offset1(cell_type1_offset + degree*degree*degree);
               const unsigned int cell_type2_offset2(cell_type2_offset1 + degree*degree*degree);
               // Type-3
@@ -1236,7 +1236,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
   // This function handles the cell-dependent construction of the FACE-based shape functions.
   //
   // Note that it should only be called in 3D.
-  Assert(dim ==3, ExcDimensionMismatch(dim, 3));
+  Assert(dim == 3, ExcDimensionMismatch(dim, 3));
   //
   // It will fill in the missing parts of fe_data which were not possible to fill
   // in the get_data routine, with respect to face-based shape functions.
@@ -1246,7 +1246,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
 
   // Useful constants:
   const unsigned int degree (this->degree-1); // Note: constructor takes input degree + 1, so need to knock 1 off.
-  const unsigned int superdegree (this->degree); // Note: constructor takes input degree + 1, so need to knock 1 off.
+  const unsigned int superdegree (this->degree);
 
   // Do nothing if FE degree is 0.
   if (degree>0)
@@ -1292,8 +1292,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
 
           for (unsigned int m=0; m<faces_per_cell; ++m)
             {
-              // Find the local vertex on this face with the highest global numbering
-              // and the face opposite it. This is f^m_0.
+              // Find the local vertex on this face with the highest global numbering. This is f^m_0.
               unsigned int current_max = 0;
               unsigned int current_glob = cell->vertex_index(GeometryInfo<dim>::face_to_cell_vertices(m,0));
               for (unsigned int v=1; v<vertices_per_face; ++v)
@@ -1305,10 +1304,12 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
                     }
                 }
               face_orientation[m][0] = GeometryInfo<dim>::face_to_cell_vertices(m,current_max);
-              // f^m_2 is the vertex opposite f^m_0:
+
+              // f^m_2 is the vertex opposite f^m_0.
               face_orientation[m][2] = GeometryInfo<dim>::face_to_cell_vertices(m,vertex_opposite_on_face[current_max]);
-              // f^m_1 is the higher global vertex number of the remaining 2 local vertices
-              // and f^m_3 is the lower.
+
+              // Finally, f^m_1 is the vertex with the greater global numbering of the remaining
+              // two local vertices. Then, f^m_3 is the other.
               if ( cell->vertex_index(GeometryInfo<dim>::face_to_cell_vertices(m,vertices_adjacent_on_face[current_max][0]))
                    > cell->vertex_index(GeometryInfo<dim>::face_to_cell_vertices(m,vertices_adjacent_on_face[current_max][1])) )
                 {
@@ -1322,7 +1323,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
                 }
             }
 
-          // Now we know the face orientation on the current cell, we have generate the parameterisation:
+          // Now we know the face orientation on the current cell, we can generate the parameterisation:
           std::vector<std::vector<double> > face_xi_values(faces_per_cell,
                                                            std::vector<double> (n_q_points));
           std::vector<std::vector<double> > face_xi_grads(faces_per_cell,
