@@ -360,7 +360,7 @@ FE_NedelecSZ<dim>::get_data (
       const unsigned int cell_type3_offset1 = cell_type2_offset + degree*degree;
       const unsigned int cell_type3_offset2 = cell_type3_offset1 + degree;
 
-      if (flags & update_values | update_gradients)
+      if (flags & (update_values | update_gradients))
         {
           // compute all points we must evaluate the 1d polynomials at:
           std::vector< Point<dim> > cell_points (n_q_points);
@@ -682,7 +682,7 @@ FE_NedelecSZ<dim>::get_data (
 
           // for cell-based shape functions:
           // these don't depend on the cell, so can precompute all here:
-          if (flags & update_values | update_gradients)
+          if (flags & (update_values | update_gradients))
             {
               // Cell-based shape functions:
               //
@@ -921,7 +921,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
     {
     case 2:
     {
-      if (flags & update_values | update_gradients)
+      if (flags & (update_values | update_gradients))
         {
 
           // Define an edge numbering so that each edge, E_{m} = [e^{m}_{1}, e^{m}_{2}]
@@ -1066,7 +1066,7 @@ void FE_NedelecSZ<dim>::fill_edge_values(const typename Triangulation<dim,dim>::
     }
     case 3:
     {
-      if (flags & update_values | update_gradients)
+      if (flags & (update_values | update_gradients))
         {
           // Define an edge numbering so that each edge, E_{m} = [e^{m}_{1}, e^{m}_{2}]
           // e1 = higher global numbering of the two local vertices
@@ -1241,7 +1241,7 @@ void FE_NedelecSZ<dim>::fill_face_values(const typename Triangulation<dim,dim>::
     {
       const UpdateFlags flags(fe_data.update_each);
 
-      if (flags & update_values | update_gradients)
+      if (flags & (update_values | update_gradients))
         {
           const unsigned int n_q_points = quadrature.size();
 
